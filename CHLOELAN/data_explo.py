@@ -8,6 +8,7 @@ Created on Fri Sep 25 15:05:41 2026
 
 
 import pandas as pd
+import random as rd
 #import matplotlib as plt
 
 
@@ -26,4 +27,25 @@ fam_fungi2 = fam_fungi.drop("other", axis=1)
 
 fam_fungi2.loc['SRR1502337'].plot.bar()
 
+
+# %% Séparation des données
+
+n = len(fam_fungi2)
+ratio = 0.9
+L = [ i for i in range(len(fam_fungi2)) ]
+L_calibration = rd. sample(L, int(ratio*n))
+L_calibration.sort()
+
+L_test = []
+for i in range(n):
+    if i  not in L_calibration:
+        L_test.append(i)
+
+dta_calibration = fam_fungi2.iloc[L_calibration]
+dta_test = fam_fungi2.iloc[L_test]
+
+print(dta_calibration)
+print(dta_test)
+
+# %% En cours
 
