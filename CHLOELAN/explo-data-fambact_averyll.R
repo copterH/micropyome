@@ -1,9 +1,8 @@
 #auteur.ice : BARON Anaelle
 #PROJET MLB (M2 MODE V Monbet) CHLOELAN, theme champi
 #Creation_Date : "2026-09-25 15:49:10 CEST"
-#Modification_Date : 2026-09-28 15:09:54 CEST
+#Modification_Date :"2026-10-05 15:46:43 CEST"
 #1) libraries -----
-library(readr)
 library(vegan)#rda (le+ utilise mnt)
 library(tidyverse)#subset ou select ?
 library(ade4)#ancien package pr rda
@@ -11,6 +10,7 @@ library(readr)
 library(ggvegan)#plots rda ?
 library(FactoMineR)#pour les plots analyse multivarie et contribution abs ou relative
 library(factoextra)
+library(ape) #PCOA
 # library(ggplot2)
 #importer le jeu de donnees : observees a l'echelle des familles de bacteries -----
 #chemin d'acces ds repo de base : data/averill/bacteria/family/observed.csv")
@@ -39,6 +39,7 @@ sum(observed[4,2:12])
 str(observed)
 summary(observed)
 dim(observed)
+#AVEC LES FAMILLES DE CHAMPI -----
 #5) RDA = Analyse de redondance sur les familles de champignon V1 -----
 ##import var X et Y
 fam_champi <- read.csv("observed.csv") # Y
@@ -209,8 +210,25 @@ anova(famconnu_champi_RDA6, by = "axis")
 plot (famconnu_champi_RDA6, display = c( "species", "bp") )#biplot arrows
 #axe 1 : pH, map, cn, K
 #axe 2 : cn, relEM
+#AVEC LES GRP FONCTIONNELS CHAMPI ------
+#7) import fg_obs : groupes fonctionnels ----
+fc_grp <- read.csv("fg_observed.csv")
+str(fc_grp)
+summary(fc_grp)
+##RDA grp fonctionels ----
+grpfc_champi_RDA1 <- rda(fc_grp[2:7] ~ pC + cn + pH + NPP + map + mat + forest + conifer + relEM +P + K + Ca + Mg, data = var13_env)
+##contrib relatives et plot ----
+plot (grpfc_champi_RDA1, display = c("species", "reg"))#biplot arrows
+anova(grpfc_champi_RDA1, by = "terms")#anova type 1
+#PH, relEM***, NPP, conifer, K**, Conifer (.)
+anova(grpfc_champi_RDA1, by = "margin")#anova type 2
+#relEM**, pH, map*, cn, K .
+scores (grpfc_champi_RDA1, display = "reg")
+#axe1: relEM, puis pH, puis Mg, cn, pC
+#axe 2: Ca, NPP, puis Cn et P
+scores (grpfc_champi_RDA1, display = "bp")
 
-#7) nom des var env ---- 
+#8) nom des var env ---- 
 
 # Percentage of carbon (pC)
 
