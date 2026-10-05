@@ -14,11 +14,16 @@ from sklearn.linear_model import Lasso
 
 
 
-# %% Importation des données avec pandas
+# %% Importation des données par famille avec pandas
 
 fam_fungi = pd.read_csv('observed.csv', sep=',', index_col=0)
 env13 = pd.read_csv('13_variables.csv', sep=',', index_col=0)
 env09 = pd.read_csv('09_variables.csv', sep=',', index_col=0)
+
+# %% Importation des données par fonction avec pandas
+
+fg_fungi = pd.read_csv('fg_observed.csv', sep=',', index_col=0)
+
 
 # %% Retrait de la catégorie 'Others'
 
@@ -31,7 +36,7 @@ fam_fungi2 = fam_fungi.drop("other", axis=1)
 
 fam_fungi2.loc['SRR1502337'].plot.bar()
 
-
+fg_fungi.loc['SRR1502674'].plot.bar()
 # %% Séparation des données
 
 # L_calibration est la liste des indices des sites qui se retrouvent
