@@ -70,7 +70,15 @@ print(abund_test)
 # On travaillera par la suite exclusivement avec les données de calibrations.
 # Les données de test seront utilisées uniquement à la fin pour valider ou non le modèle
 
-# %% LM - Modèle linéaire
+
+# %% On transforme les données pour que la somme de chaque ligne = 1
+
+
+# %% Visualisation des valeurs d'abondance de la famille i pour chaque site
+abund_cal["Mortierellaceae"].plot.bar()
+
+
+# %% LM - Modèle linéaire : 1 par famille
 
 Lm = LinearRegression()
 Lm.fit(env09_cal, abund_cal)
