@@ -2,7 +2,7 @@
 #PROJET MLB (M2 MODE V Monbet) CHLOELAN, theme champi
 #Creation_Date : "2026-09-25 15:49:10 CEST"
 #Modification_Date : 2026-09-28 15:09:54 CEST
-#1) libraries -----
+#1) Libraries -----
 library(tidyverse)
 library(readr)
 library(vegan)#rda (le+ utilise mnt)
@@ -11,8 +11,8 @@ library(ade4)#ancien package pr rda
 library(readr)
 library(ggvegan)#plots rda ?
 # library(ggplot2)
-#importer le jeu de donnees : observees a l'echelle des familles de bacteries -----
-#chemin d'acces ds repo de base : data/averill/bacteria/family/observed.csv")
+# importer le jeu de donnees : observees a l'echelle des familles de bacteries -----
+#chemin d'acces ds repo de base : data/averill/fungi/family/observed.csv")
 observed <- read_csv("observed.csv")
 View(observed)
 
@@ -38,7 +38,7 @@ sum(observed[4,2:12])
 str(observed)
 summary(observed)
 dim(observed)
-#5) RDA = Analyse de redondance sur les familles de champignon V1 -----
+# 5) RDA = Analyse de redondance sur les familles de champignon V1 -----
 ##import var X et Y
 fam_champi <- read.csv("observed.csv") # Y
 var9_env <- read.csv("09_variables.csv")#X restraint
