@@ -4,7 +4,7 @@ Created on Fri Sep 25 15:05:41 2026
 
 @author: edes
 """
-# %% Importation des librairies
+#%% Importation des librairies
 
 import pandas as pd
 import random as rd
@@ -14,7 +14,7 @@ from sklearn.linear_model import Lasso
 
 
 
-# %% Importation des données avec pandas
+#%% Importation des données avec pandas
 
 fam_fungi = pd.read_csv('observed.csv', sep=',', index_col=0)
 env13 = pd.read_csv('13_variables.csv', sep=',', index_col=0)
