@@ -24,7 +24,7 @@ envt9 <- read.table('09_variables.csv', header = TRUE, sep = ',',
 envt13 <- read.table('13_variables.csv', header = TRUE, sep = ',',
                     stringsAsFactors = TRUE)
 
-distance <- dissimilarity(fg_observed, method='bray')
+distance <- dist(fg_observed, method='canberra')
 
 
 # 3. PCoA ----
@@ -52,6 +52,7 @@ for (i in 1:length(fg_observed)){
   train <- sample(1:n,ratio*n)
   val <- setdiff(1:n, train)
   
+  D <- dist(fg_observed, method='canberra')
   
 }
 
