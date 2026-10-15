@@ -192,3 +192,39 @@ fam_champi_RDA2 <- rda(fam_champi[2:22] ~ pC + cn + pH + NPP + map + mat + fores
 # 
 # Relative abundance of ectomycorrhizal trees (relEM)
 
+
+#---- RDA FUNGAL FUNCTION
+
+fg_averill <- read.csv("fg_observed.csv")
+rownames(fg_averill) <- fg_averill[,1]
+fg_averill<-fg_averill[,-1]
+fg_averill<-fg_averill[,-1]
+fg_neon <- read.csv("fg_plot_observed.csv")
+rownames(fg_neon) <- fg_neon[,1]
+fg_neon<-fg_neon[,-1]
+fg_neon<-fg_neon[,-1]
+fg<-
+
+explain_fg<-read.csv("09_variables.csv")
+rownames(explain_fg)<- explain_fg[,1]
+explain_fg<-explain_fg[,-1]
+
+
+
+
+RDA_fg_param <-rda(fg ~ ., 
+                  data = explain_fg, scale = TRUE)
+
+vif.cca(RDA_fg_param)
+anova(RDA_fg_param,by="margin")
+
+RDA_fg <-rda(fg ~ pH + relEM + conifer, 
+                   data = explain_fg, scale = TRUE)
+
+RsquareAdj(RDA_fg)
+
+library(ggvegan)
+autoplot(RDA_fg, layers=c("species","biplot","sites"))+ 
+  geom_hline(yintercept=0,linetype=2)+
+  geom_vline(xintercept=0,linetype=2)+ 
+  theme_bw()
