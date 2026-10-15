@@ -91,6 +91,24 @@ lasso.fit(env09_cal, abund_cal)
 # print("order 3 (lambda = 0.1) = " + str(np.round(rmse3_lasso,3)))
 # print("order 3 = "+str(np.round(rmse3_val,3)))
 
+
+# %% fonction distance
+
+# Fonction qui calcule la Chi-distance
+def chi2_distance(A, B):
+
+    # compute the chi-squared distance using above formula
+    chi = 0.5 * np.sum([((a - b) ** 2) / (a + b) 
+                      for (a, b) in zip(A, B)])
+
+    return chi
+
+# C'est a dire qu'il faut que A et B soient des listes
+
+# %% RDA sous python
+
+
+
 # %% En cours
 
 # Définir les paramètres
@@ -100,18 +118,9 @@ n_train = 2/3 * n
 
 # Fonctions à définir
 
-def distance(data): # fonction qui renvoie une matrice de distance
-# distance peut être euclidienne
-# pcoa permet d'avoir d'autres types de distance
-   print(n)
-
-
-# PCoA
-
-def pcoa(x): # fonction qui réalise la pcoa à partir d'une matrice de distance
-    print(n)
-
-# onrécupère pour chaque 
+   
+   
+# Pour chaque axe de la rda, on fait une regression linéaire pour expliquer à partir 
 
 # Boucle 
 for i in range(1,B):
@@ -124,14 +133,10 @@ for i in range(1,B):
     
     
     # Calcul des 
-    D = distance(fg_fungi[L_train,])
-    PCoA = pcoa(D)
-    res = lm(pcoa[,1])
+    # D = distance(fg_fungi[L_train,]) # Calcul de la distance entre prédit et observé
+    # PCoA = pcoa(D) # On fait quoi concrètement ici ?
+    # res = lm(pcoa[,1]) # régression linéaire ???
 
-
-
-
-# %%
 # Importing necessary libraries
 import numpy as np
 from sklearn.metrics import pairwise_distances
