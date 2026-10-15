@@ -1,0 +1,17 @@
+ETAPES PROJ MLB CHLOLEAN
+
+
+15/10/26
+
+decision type analyse utilisé pour les prédictions : RDA vs PCOA
+
+RDA !!
+
+RDA sur R
+exporter la RDA ?
+choix type de langage : R vs python
+
+RDA sur Python 
+prediction 80% train 20% test
+Projection sur python
+
