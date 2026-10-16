@@ -3,7 +3,7 @@ ETAPES PROJ MLB CHLOLEAN
 
 15/10/26
 
-decision type analyse utilisé pour les prédictions : RDA vs PCOA
+décision type analyse utilisé pour les prédictions : RDA vs PCOA
 
 RDA !!
 
