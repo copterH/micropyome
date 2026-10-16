@@ -109,6 +109,8 @@ def chi2_distance(A, B):
 
 
 
+pred = 'vecteur des prédictions'
+
 # %% En cours
 
 # Définir les paramètres
@@ -116,11 +118,11 @@ B = 100 # Var choisie
 n = len(abund_cal)
 n_train = 2/3 * n
 
-# Fonctions à définir
+# 
 
-   
-   
 # Pour chaque axe de la rda, on fait une regression linéaire pour expliquer à partir 
+
+
 
 # Boucle 
 for i in range(1,B):
@@ -133,7 +135,7 @@ for i in range(1,B):
     
     
     # Calcul des 
-    # D = distance(fg_fungi[L_train,]) # Calcul de la distance entre prédit et observé
+    D = chi2_distance(fg_fungi[L_train,], pred) # Calcul de la distance entre prédit et observé
     # PCoA = pcoa(D) # On fait quoi concrètement ici ?
     # res = lm(pcoa[,1]) # régression linéaire ???
 
