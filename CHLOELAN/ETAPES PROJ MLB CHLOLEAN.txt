@@ -15,3 +15,19 @@ RDA sur Python
 prediction 80% train 20% test
 Projection sur python
 
+
+RDA ok
+
+Reglin axes x5 --> ds boucle
+> Monte carlo loop Py --> R
+- faire 2 groupes --> TRAIN et VALIDATION
+- modele lineaire
+- obs vs prediction
+reajuster modele 
+fin boucle
+
+
+EVALUATION/validation finale
+- projeter test-final dans axes RDA --> Y
+- applique le modele lineaire à test-final --> ^Y (Y estimé)
+- score modele

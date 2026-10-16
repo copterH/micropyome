@@ -234,7 +234,7 @@ scores (grpfc_champi_RDA1, display = "reg")
 scores (grpfc_champi_RDA1, display = "bp")
 #7bis - exporter la RDA (csv ou table ?)-----
 matrice_rda(as.matrix(grpfc_champi_RDA1))
-write.table(as.matrix(grpfc_champi_RDA1), "C:/Users/Mme Baron/Bureau/M2_BEE-MODE_rennes/MLB/Projet_MLB_Champi/micropyome/CHLOELAN/rda_fg")
+write.table(as.matrix(grpfc_champi_RDA1), "C:/Users/Mme Baron/Bureau/M2_BEE-MODE_rennes/MLB/Projet_MLB_Champi/micropyome/CHLOELAN/srda_fg")
 head(matrice_rda)
 
 
