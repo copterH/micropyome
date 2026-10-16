@@ -268,12 +268,22 @@ head(matrice_rda)
 # 
 # Relative abundance of ectomycorrhizal trees (relEM)
 
+#9)RDA NEON !!! -----
+fc_grp_neon <- read.csv ("fg_core_observed_neon.csv")
+
+
+fg_champi_neon_RDA1 <- rda(fc_grp_neon[2:7] ~ pC + cn + pH + NPP + map + mat + forest + conifer + relEM +P + K + Ca + Mg, data = var13_env)
+
+
+
+
+
 
 #test predict CV ??
 fg_champi_rda_CV <- rda(grouping = fc_grp, X = c(pC + cn + pH + NPP + map + mat + forest + conifer + relEM +P + K + Ca + Mg, data =var13_env), 
                       CV = TRUE)
 predict(fg_champi_RDA1)
-#9) Boucle pour predire les valeurs a partir de la RDA ------
+#10) Boucle pour predire les valeurs a partir de la RDA ------
 #Reglin axes x5 --> ds boucle
 # Monte carlo loop Py --> R
 as.mcmc.emmGrid(grpfc_champi_RDA1)#  no applicable method for `@` applied to an object of class "rda"
