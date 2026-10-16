@@ -43,12 +43,9 @@ sum(observed[4,2:12])
 str(observed)
 summary(observed)
 dim(observed)
-<<<<<<< HEAD
 #AVEC LES FAMILLES DE CHAMPI -----
 #5) RDA = Analyse de redondance sur les familles de champignon V1 -----
-=======
-# 5) RDA = Analyse de redondance sur les familles de champignon V1 -----
->>>>>>> 69f55ee3fda8d30dc0c2db65f488db6907efe514
+
 ##import var X et Y
 fam_champi <- read.csv("observed.csv") # Y
 var9_env <- read.csv("09_variables.csv")#X restraint
@@ -235,6 +232,11 @@ scores (grpfc_champi_RDA1, display = "reg")
 #axe1: relEM, puis pH, puis Mg, cn, pC
 #axe 2: Ca, NPP, puis Cn et P
 scores (grpfc_champi_RDA1, display = "bp")
+#7bis - exporter la RDA (csv ou table ?)-----
+matrice_rda(as.matrix(grpfc_champi_RDA1))
+write.table(as.matrix(grpfc_champi_RDA1), "C:/Users/Mme Baron/Bureau/M2_BEE-MODE_rennes/MLB/Projet_MLB_Champi/micropyome/CHLOELAN/srda_fg")
+head(matrice_rda)
+
 
 #8) nom des var env ---- 
 
