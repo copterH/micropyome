@@ -15,6 +15,7 @@ library(ggvegan)#plots rda ?
 library(FactoMineR)#pour les plots analyse multivarie et contribution abs ou relative
 library(factoextra)
 library(ape) #PCOA
+library(emmeans)#MCMC based estimation
 # library(ggplot2)
 # importer le jeu de donnees : observees a l'echelle des familles de bacteries -----
 #chemin d'acces ds repo de base : data/averill/fungi/family/observed.csv")
@@ -24,6 +25,7 @@ View(observed)
 head(observed)
 #2)) somme des lignes pour i allant de 1 à fin ? ------
 vect_sum_i <- 0
+
 for (i in range (1:10)){
   sum_i <- sum(observed[i,2:12])
   vect_sum_i <- c (vect_sum_i, sum_i)
@@ -43,6 +45,7 @@ sum(observed[4,2:12])
 str(observed)
 summary(observed)
 dim(observed)
+
 #AVEC LES FAMILLES DE CHAMPI -----
 #5) RDA = Analyse de redondance sur les familles de champignon V1 -----
 
@@ -54,6 +57,7 @@ var13_env <- read.csv("13_variables.csv") #X tot
 #verif que les noms des echantillons sont les memmes dans les diff dataset
 fam_champi$X == var9_env$X
 sum (fam_champi$X == var13_env$X) == nrow(fam_champi)
+
 
 fam_champi$X[1:10]
 var9_env$X[1:10]
@@ -231,9 +235,14 @@ anova(grpfc_champi_RDA1, by = "margin")#anova type 2
 scores (grpfc_champi_RDA1, display = "reg")
 #axe1: relEM, puis pH, puis Mg, cn, pC
 #axe 2: Ca, NPP, puis Cn et P
+anova (grpfc_champi_RDA1, by = "axis")
+
 scores (grpfc_champi_RDA1, display = "bp")
+RsquareAdj (grpfc_champi_RDA1)
+##obs la colinearite des var ?? -----
+vif.cca (grpfc_champi_RDA1)
 #7bis - exporter la RDA (csv ou table ?)-----
-matrice_rda(as.matrix(grpfc_champi_RDA1))
+matrice_rda<- (as.matrix(grpfc_champi_RDA1))
 write.table(as.matrix(grpfc_champi_RDA1), "C:/Users/Mme Baron/Bureau/M2_BEE-MODE_rennes/MLB/Projet_MLB_Champi/micropyome/CHLOELAN/srda_fg")
 head(matrice_rda)
 
@@ -259,3 +268,21 @@ head(matrice_rda)
 # 
 # Relative abundance of ectomycorrhizal trees (relEM)
 
+
+#test predict CV ??
+fg_champi_rda_CV <- rda(grouping = fc_grp, X = c(pC + cn + pH + NPP + map + mat + forest + conifer + relEM +P + K + Ca + Mg, data =var13_env), 
+                      CV = TRUE)
+predict(fg_champi_RDA1)
+#9) Boucle pour predire les valeurs a partir de la RDA ------
+#Reglin axes x5 --> ds boucle
+# Monte carlo loop Py --> R
+as.mcmc.emmGrid(grpfc_champi_RDA1)#  no applicable method for `@` applied to an object of class "rda"
+
+
+# - faire 2 groupes --> TRAIN et VALIDATION
+# - modele lineaire
+# - obs vs prediction
+dist.chi2()
+# reajuster modele 
+# fin boucle
+# 
