@@ -268,6 +268,47 @@ head(matrice_rda)
 # 
 # Relative abundance of ectomycorrhizal trees (relEM)
 
+#9) RDA NEON !!! -----
+## import NEON ----
+#dataset grp fonctionnel et les variables de neon
+fc_grp_neon <- read.csv ("fg_core_observed_neon.csv")
+neon_13var <- read.csv("fg_core_13Var_neon.csv", sep = ";")
+str(neon_13var)
+str(fc_grp_neon)
+##Construire la RDA pour NEON FG ----
+fg_champi_neon_RDA1 <- rda(fc_grp_neon[2:7] ~ pC + cn + pH + NPP + map + mat + forest + conifer + relEM +P + K + Ca + Mg, data = neon_13var)
+
+##evaluer quali RDA NEON FG -----
+anova(fg_champi_neon_RDA1, by = "axis")#3 axes sign (mieux que averyll)
+scores (fg_champi_neon_RDA1, display = "reg")
+#RDA1 (1er axe reg): relEM, cn, Mg, forest
+scores (fg_champi_neon_RDA1, display = "sp")
+#RDA1 (1er axe sp): Ectomyc, saprotroph
+#RDA2: (2e axe reg): conifer, Mg, mat, 
+# RDA2: (2e axe sp): Other, saprotroph  
+anova(fg_champi_neon_RDA1, by= "terms")#anova type I (bof): tout sign sauf P et Mg
+anova(fg_champi_neon_RDA1, by = "margin")#anova type II (mieux) :tout sign sauf pH, map, P
+
+
+anova(fg_champi_neon_RDA1, by = "onedf")#test séquentiel des contrastes à un degré de liberté des niveaux de facteur, offrant ainsi une analyse détaillée des effets individuels au sein des modèles d'ordination contrainte
+#var avec max d'inerties et sign: cn, puis matn pH et map
+#toutes significatives sauf forest, P, Ca (pas du tout sign); conifer et K (.)
+
+
+RsquareAdj(fg_champi_neon_RDA1)#36% (moins bien que FG averyll)
+
+vif.cca (fg_champi_neon_RDA1)>10 #dependances lineaires entre les cond et contraintes
+#map=14.4 et map = 15>10 donc a retirer ??
+#coeff les + faibles = pC et K
+
+plot (fg_champi_neon_RDA1, display = c("species", "reg"))#biplot arrows
+
+
+
+
+
+
+
 
 #---- RDA FUNGAL FUNCTION
 
@@ -309,7 +350,7 @@ autoplot(RDA_fg, layers=c("species","biplot","sites"))+
 fg_champi_rda_CV <- rda(grouping = fc_grp, X = c(pC + cn + pH + NPP + map + mat + forest + conifer + relEM +P + K + Ca + Mg, data =var13_env), 
                       CV = TRUE)
 predict(fg_champi_RDA1)
-#9) Boucle pour predire les valeurs a partir de la RDA ------
+#10) Boucle pour predire les valeurs a partir de la RDA ------
 #Reglin axes x5 --> ds boucle
 # Monte carlo loop Py --> R
 as.mcmc.emmGrid(grpfc_champi_RDA1)#  no applicable method for `@` applied to an object of class "rda"
