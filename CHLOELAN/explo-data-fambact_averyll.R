@@ -303,8 +303,10 @@ vif.cca (fg_champi_neon_RDA1)>10 #dependances lineaires entre les cond et contra
 
 plot (fg_champi_neon_RDA1, display = c("species", "reg"))#biplot arrows
 
-
-
+plot (fg_champi_neon_RDA1, display = c("species")) #les var expliquees Y
+plot (fg_champi_neon_RDA1, display = c("reg"))#var explicatives 13 X
+plot (fg_champi_neon_RDA1, display = "wa")#les points
+plot (fg_champi_neon_RDA1, display = "cn")# 
 
 
 
