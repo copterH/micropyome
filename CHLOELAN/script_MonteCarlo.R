@@ -90,9 +90,26 @@ summary(linear_model3)#Ph, Conifer (*), K (.)
 RsquareAdj(linear_model3)#R² adj = 8.8% (27% variance sinon)
 
 #Ajout méthodes complémentaires type lasso etc. (optionnel)
-linear_model_qr <-lm( RDA1 ~ pC + cn + pH + NPP + map + mat + forest + conifer + relEM +P + K + Ca + Mg, data=train_fg, method = "model.frame")
+linear_model_qr <-lm( RDA1 ~ pC + cn + pH + NPP + map + mat + forest + conifer + relEM +P + K + Ca + Mg, data=train_fg, method = "qr")
+# R² ajuste = 0.429 (54% sinon )
 
-
+#DRAFT PREDIRE LES obs de VALIDATION a partir de LM1 -----
+predict (linear_model1, newdata = valid )#s$class
+library("cv")
+summary(cv(m.auto, k = "loo") ) # default method = "hatvalues"
+#> n-Fold Cross Validation
+#> method: hatvalues
+#> criterion: mse
+#> cross-validation criterion = 19.248
+summary(cv(m.auto, k = "loo", method = "naive"))         
+         ##comparer cette prediction avec les obs reelles ----
+         
 #Autre ?----
-#fonction pour projeter, rdaout est le nom du modèle de rda
+#fonction pour projeter, rdaout est le nom du modèle de rda----
 fitted_values_predict <- predict(rdaout, newdata=G, type="response")
+
+#test avorted pr ajouter nvelles donnees neon en plus de averyll
+fitted_values_predict_2 <- predict (RDA, newdata = fg_champi_neon_RDA1, type = "response")
+plot(fitted_values_predict_2)
+neon_13var
+fc_grp_neon
