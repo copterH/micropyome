@@ -17,6 +17,10 @@ Projection sur python
 
 
 RDA ok
+fonction pour projeter, rdaout est le nom du modèle de rda
+fitted_values_predict <- predict(rdaout, newdata=G, type="response")
+ rda$CCA$u pour avoir les coordonnées de la RDA
+
 
 Reglin axes x5 --> ds boucle
 > Monte carlo loop Py --> R

@@ -2,7 +2,7 @@
 #PROJET MLB (M2 MODE V Monbet) CHLOELAN, theme champi
 #Creation_Date : "2026-09-25 15:49:10 CEST"
 
-#Modification_Date :"2026-10-05 15:46:43 CEST"
+#Modification_Date : "2026-10-20 17:40:19 CEST"
 #1) libraries -----
 
 #1) libraries -----
@@ -19,10 +19,11 @@ library(emmeans)#MCMC based estimation
 # library(ggplot2)
 # importer le jeu de donnees : observees a l'echelle des familles de bacteries -----
 #chemin d'acces ds repo de base : data/averill/fungi/family/observed.csv")
-observed <- read_csv("observed.csv")
+observed <- read_csv("observed_averyll.csv")
 View(observed)
 
 head(observed)
+#les points 2 et 3 peu utiles, c'était plutôt des tests
 #2)) somme des lignes pour i allant de 1 à fin ? ------
 vect_sum_i <- 0
 
@@ -47,12 +48,15 @@ summary(observed)
 dim(observed)
 
 #AVEC LES FAMILLES DE CHAMPI -----
+##import var X et Y
+fam_champi <- read.csv("observed_averyll.csv") # Y
+var9_env <- read.csv("09_variables_averyll.csv")#X restraint
+var13_env <- read.csv("13_variables_averyll.csv") #X tot
+#inutile de dérouler les parties 5 et 6 également : non utilisées par la suite 
+#(car on est passé de familles de champignons à groupes fonctionnels)
+#passer directement au #7)
 #5) RDA = Analyse de redondance sur les familles de champignon V1 -----
 
-##import var X et Y
-fam_champi <- read.csv("observed.csv") # Y
-var9_env <- read.csv("09_variables.csv")#X restraint
-var13_env <- read.csv("13_variables.csv") #X tot
 
 #verif que les noms des echantillons sont les memmes dans les diff dataset
 fam_champi$X == var9_env$X
@@ -221,7 +225,7 @@ plot (famconnu_champi_RDA6, display = c( "species", "bp") )#biplot arrows
 #axe 2 : cn, relEM
 #AVEC LES GRP FONCTIONNELS CHAMPI ------
 #7) import fg_obs : groupes fonctionnels ----
-fc_grp <- read.csv("fg_observed.csv")
+fc_grp <- read.csv("fg_observed_averyll.csv")
 str(fc_grp)
 summary(fc_grp)
 ##RDA grp fonctionels ----
