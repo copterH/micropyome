@@ -24,8 +24,8 @@ fitted_values_predict <- predict(rdaout, newdata=G, type="response")
 
 Reglin axes x5 --> ds boucle
 > Monte carlo loop Py --> R
-- faire 2 groupes --> TRAIN et VALIDATION
-- modele lineaire
+- faire 2 groupes --> TRAIN et VALIDATION (commencee par Chloe, test sur 1 run)
+- modele lineaire (ecrits mais pas surs qu'ils fonctionnent)
 - obs vs prediction
 reajuster modele 
 fin boucle
