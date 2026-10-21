@@ -1,8 +1,9 @@
-#auteur.ice : BARON Anaelle
+#auteur.ice : BARON Anaelle (creation docR)
 #PROJET MLB (M2 MODE V Monbet) CHLOELAN, theme champi
+#BARON Anaëlle, BRES-MONTVOISIN Chloé, DESNYDER Eli
 #Creation_Date : "2026-09-25 15:49:10 CEST"
 
-#Modification_Date :"2026-10-05 15:46:43 CEST"
+#Modification_Date : "2026-10-20 17:40:19 CEST"
 #1) libraries -----
 
 #1) libraries -----
@@ -19,10 +20,11 @@ library(emmeans)#MCMC based estimation
 # library(ggplot2)
 # importer le jeu de donnees : observees a l'echelle des familles de bacteries -----
 #chemin d'acces ds repo de base : data/averill/fungi/family/observed.csv")
-observed <- read_csv("observed.csv")
+observed <- read_csv("observed_averyll.csv")
 View(observed)
 
 head(observed)
+#les points 2 et 3 peu utiles, c'était plutôt des tests
 #2)) somme des lignes pour i allant de 1 à fin ? ------
 vect_sum_i <- 0
 
@@ -47,12 +49,15 @@ summary(observed)
 dim(observed)
 
 #AVEC LES FAMILLES DE CHAMPI -----
+##import var X et Y
+fam_champi <- read.csv("observed_averyll.csv") # Y
+var9_env <- read.csv("09_variables_averyll.csv")#X restraint
+var13_env <- read.csv("13_variables_averyll.csv") #X tot
+#inutile de dérouler les parties 5 et 6 également : non utilisées par la suite 
+#(car on est passé de familles de champignons à groupes fonctionnels)
+#passer directement au #7)
 #5) RDA = Analyse de redondance sur les familles de champignon V1 -----
 
-##import var X et Y
-fam_champi <- read.csv("observed.csv") # Y
-var9_env <- read.csv("09_variables.csv")#X restraint
-var13_env <- read.csv("13_variables.csv") #X tot
 
 #verif que les noms des echantillons sont les memmes dans les diff dataset
 fam_champi$X == var9_env$X
@@ -69,6 +74,7 @@ var9_env$conifer <- as.numeric(var9_env$conifer)
 
 #obs les data sp (fam)Y
 str(fam_champi)
+#data = Averyll
 # (A) creer la RDA avec 9 variables -----
 fam_champi_RDA <- rda (fam_champi[2:22] ~ pC + cn + pH + NPP + map + mat + forest + conifer + relEM, data = var9_env)
 ##Significativite : anova et R²----
@@ -221,7 +227,7 @@ plot (famconnu_champi_RDA6, display = c( "species", "bp") )#biplot arrows
 #axe 2 : cn, relEM
 #AVEC LES GRP FONCTIONNELS CHAMPI ------
 #7) import fg_obs : groupes fonctionnels ----
-fc_grp <- read.csv("fg_observed.csv")
+fc_grp <- read.csv("fg_observed_averyll.csv")
 str(fc_grp)
 summary(fc_grp)
 ##RDA grp fonctionels ----
@@ -235,12 +241,12 @@ anova(grpfc_champi_RDA1, by = "margin")#anova type 2
 scores (grpfc_champi_RDA1, display = "reg")
 #axe1: relEM, puis pH, puis Mg, cn, pC
 #axe 2: Ca, NPP, puis Cn et P
-anova (grpfc_champi_RDA1, by = "axis")
+anova (grpfc_champi_RDA1, by = "axis")#axe 1 ***
 
 scores (grpfc_champi_RDA1, display = "bp")
-RsquareAdj (grpfc_champi_RDA1)
+RsquareAdj (grpfc_champi_RDA1)#41% variance R² ajuste (47% sinon)
 ##obs la colinearite des var ?? -----
-vif.cca (grpfc_champi_RDA1)
+vif.cca (grpfc_champi_RDA1)#c'est ok
 #7bis - exporter la RDA (csv ou table ?)-----
 matrice_rda<- (as.matrix(grpfc_champi_RDA1))
 write.table(as.matrix(grpfc_champi_RDA1), "C:/Users/Mme Baron/Bureau/M2_BEE-MODE_rennes/MLB/Projet_MLB_Champi/micropyome/CHLOELAN/srda_fg")
@@ -268,21 +274,104 @@ head(matrice_rda)
 # 
 # Relative abundance of ectomycorrhizal trees (relEM)
 
-#9)RDA NEON !!! -----
+#9) RDA NEON !!! -----
+## import NEON ----
+#dataset grp fonctionnel et les variables de neon
 fc_grp_neon <- read.csv ("fg_core_observed_neon.csv")
+neon_13var <- read.csv("fg_core_13Var_neon.csv", sep = ";")
+str(neon_13var)
+str(fc_grp_neon)
+##Construire la RDA pour NEON FG ----
+fg_champi_neon_RDA1 <- rda(fc_grp_neon[2:7] ~ pC + cn + pH + NPP + map + mat + forest + conifer + relEM +P + K + Ca + Mg, data = neon_13var)
 
 
-fg_champi_neon_RDA1 <- rda(fc_grp_neon[2:7] ~ pC + cn + pH + NPP + map + mat + forest + conifer + relEM +P + K + Ca + Mg, data = var13_env)
+##evaluer quali RDA NEON FG -----
+anova(fg_champi_neon_RDA1, by = "axis")#3 axes sign mais surtout les 2 premiers (mieux qu'avec data averyll)
+scores (fg_champi_neon_RDA1, display = "reg")
+#RDA1 (1er axe reg): relEM, cn, Mg, forest
+scores (fg_champi_neon_RDA1, display = "sp")
+#RDA1 (1er axe sp): Ectomyc, saprotroph (+other)
+#RDA2: (2e axe reg): conifer, Mg, mat, 
+# RDA2: (2e axe sp): Other, saprotroph  
+anova(fg_champi_neon_RDA1, by= "terms")#anova type I (bof): tout sign sauf P et Mg
+anova(fg_champi_neon_RDA1, by = "margin")#anova type II (mieux) :tout sign sauf pH, map, P
+
+
+anova(fg_champi_neon_RDA1, by = "onedf")#test séquentiel des contrastes à un degré de liberté des niveaux de facteur, offrant ainsi une analyse détaillée des effets individuels au sein des modèles d'ordination contrainte
+#var avec max d'inerties et sign: cn, puis matn pH et map
+#toutes significatives sauf forest, P, Ca (pas du tout sign); conifer et K (.)
+
+
+RsquareAdj(fg_champi_neon_RDA1)#34% de variance en R² ajusté (moins bien que FG averyll) (34% sinon)
+
+vif.cca (fg_champi_neon_RDA1)>10 #dependances lineaires entre les cond et contraintes
+#map=14.4 et map = 15>10 donc a retirer ??
+#coeff vif.cca les + faibles = pC et K
+
+plot (fg_champi_neon_RDA1, display = c("species", "reg"))#biplot arrows
+
+plot (fg_champi_neon_RDA1, display = c("species")) #les var expliquees Y
+plot (fg_champi_neon_RDA1, display = c("reg"))#var explicatives 13 X
+#plot (fg_champi_neon_RDA1, display = "cn")#les var X mais differement presente
+plot (fg_champi_neon_RDA1, display = "wa")#les points d'obs
 
 
 
 
+#NB : importation data ----
+class(observed)#"spec_tbl_df" "tbl_df"      "tbl"         "data.frame" 
+str(observed)#correspond aux data obs de averyll
+class(fg_averill)#
+#les 2 dataframe sont differents en terme de type d'obj, malgré un doc csv initialement identique
+# 9.B) ---- RDA FUNGAL FUNCTION-----
 
+fg_averill <- read.csv("fg_observed_averyll.csv")
+rownames(fg_averill) <- fg_averill[,1]
+fg_averill<-fg_averill[,-1]
+fg_averill<-fg_averill[,-1]
+fg_neon <- read.csv("fg_core_observed_neon.csv")#remplace "fg_plot_observed"
+
+fg_neon2 <- read.csv ("fg_core_observed_neon.csv")#test AB 20-10-26
+rownames(fg_neon2) <- fg_neon2[,1]
+fg_neon2<-fg_neon2[,-1]
+fg_neon2<-fg_neon2[,-1]
+fg<-
+
+explain_fg<-read.csv("09_variables_averyll.csv")#ajout averyll ds le nom import 20-10 Ab
+rownames(explain_fg)<- explain_fg[,1]
+explain_fg<-explain_fg[,-1]
+
+#test import 13var neon |AB 20-10 -----
+fg2 <- 
+  
+fg_core_13Var_neon <- read.csv("fg_core_13Var_neon.csv", sep =";")
+rownames(fg_core_13Var_neon)<- fg_core_13Var_neon[,1]
+fg_core_13Var_neon <- fg_core_13Var_neon[,-1]
+# suite 9B-----
+fg$X <- as.factor(fg$X)
+RDA_fg_param <-rda(fg ~ .,
+                  data = explain_fg, scale = TRUE)#pb : data doit etre num ??
+
+vif.cca(RDA_fg_param)
+anova(RDA_fg_param,by="margin")
+
+RDA_fg <-rda(fg ~ pH + relEM + conifer, 
+                   data = explain_fg, scale = TRUE)
+
+RsquareAdj(RDA_fg)
+
+library(ggvegan)
+autoplot(RDA_fg, layers=c("species","biplot","sites"))+ 
+  geom_hline(yintercept=0,linetype=2)+
+  geom_vline(xintercept=0,linetype=2)+ 
+  theme_bw()
 
 #test predict CV ??
 fg_champi_rda_CV <- rda(grouping = fc_grp, X = c(pC + cn + pH + NPP + map + mat + forest + conifer + relEM +P + K + Ca + Mg, data =var13_env), 
                       CV = TRUE)
 predict(fg_champi_RDA1)
+
+
 #10) Boucle pour predire les valeurs a partir de la RDA ------
 #Reglin axes x5 --> ds boucle
 # Monte carlo loop Py --> R

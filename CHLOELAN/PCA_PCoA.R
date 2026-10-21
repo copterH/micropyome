@@ -15,22 +15,22 @@ library(lubridate)
   
 # 2. Importation des données ----
 
-fg_observed <- read.table('fg_observed.csv', header = TRUE, sep = ',',
+fg_observed <- read.table('fg_observed_averyll.csv', header = TRUE, sep = ',',
                           stringsAsFactors = TRUE)
 summary(fg_observed)
 
-envt9 <- read.table('09_variables.csv', header = TRUE, sep = ',',
+envt9 <- read.table('09_variables_averyll.csv', header = TRUE, sep = ',',
                           stringsAsFactors = TRUE)
-envt13 <- read.table('13_variables.csv', header = TRUE, sep = ',',
+envt13 <- read.table('13_variables_averyll.csv', header = TRUE, sep = ',',
                     stringsAsFactors = TRUE)
 
-distance <- dist(fg_observed, method='canberra')
+distance <- dist(fg_observed, method='canberra')#matrice de distance par le triangle du bas, methode canberra
 
 
 # 3. PCoA ----
 # Basée sur les similarités entre les objets
 
-PCoA <- wcmdscale(distance, eig = TRUE)
+PCoA <- wcmdscale(distance, eig = TRUE) #echelle multidimensionnele classique ponderee, aka ACP ponderee
 
 summary(PCoA)
 
@@ -38,7 +38,7 @@ PCoA$points
 
 print(PCoA)
 
-plot(PCoA$points)
+plot(PCoA$points)#projection graphique des points de la PCOA
 
 
 
