@@ -57,5 +57,9 @@ for (i in 1:length(fg_observed)){
 }
 
 
+# 5. Evaluation finale ----
+library(vegan)
+
+
 
 
