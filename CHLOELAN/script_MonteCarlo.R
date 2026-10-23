@@ -109,7 +109,9 @@ linear_model_qr <-lm( RDA1 ~ pC + cn + pH + NPP + map + mat + forest + conifer +
 
 #Test meilleur score et enregistrer ----
 
-#(En )
+#(En dehors de la boucle) EVALUATION FINALE ----
+# Calcul des scores, à minima RMSE
+
 
 
 #DRAFT PREDIRE LES obs de VALIDATION a partir de LM1 -----
