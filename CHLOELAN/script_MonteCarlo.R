@@ -71,6 +71,8 @@ RDA_coordinates<-merge(RDA_coordinates,env_observed,by=0)
 train_fg<-RDA_coordinates %>% sample_frac(2/3) #on prend les coordonnees de 2/3 des data d'entrainement (96li)
 val_fg<-setdiff(RDA_coordinates,train_fg)#le 1/3 restant est utilise pour la validation(32li)
 
+#Initialisation score (done) et lm_amelio
+score <- 100
 
 #modèle linéaire -----
 
@@ -107,9 +109,17 @@ linear_model_qr <-lm( RDA1 ~ pC + cn + pH + NPP + map + mat + forest + conifer +
 
 #Calcul de la distance (RMSE) ----
 
+# score_new <- RMSE (je mets ça là pour qu'on ait le même nom de variable)
+
 #Test meilleur score et enregistrer ----
 
-#(En dehors de la boucle) EVALUATION FINALE ----
+if(score_new<score) {
+  lm_amelio <- matrix(c(), nrow = 3)
+  score <- score_new
+}
+
+
+#EVALUATION FINALE (En dehors de la boucle) ----
 # Calcul des scores, à minima RMSE
 
 
