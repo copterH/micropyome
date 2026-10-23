@@ -47,6 +47,8 @@ test<-RDA$CCA$u[,1:3] #extrait les coordonnees de la RDA
 #scaling ="none", "sites", "species", or "symmetric", which correspond to the values 0, 1, 2, and 3 respectively
 RDA_coordinates<-scores(RDA, display = "sites", choices = 1:3, scaling = 2)#sp?
 RDA_coordinates
+
+
 scores(RDA, display = "sites", choices = 1:3, scaling = "sp")#retrouve la meme chose que ligne precedente : score sur l'axe par sample
 scores(RDA, display = "species", choices = 1:3, scaling = 3)#inertie sur l'axe par variable Y : groupe fonctionnel
 plot(RDA, display = c("species", "reg"))#inertie sur l'axe par variable Y : groupe fonctionnel
@@ -74,24 +76,41 @@ val_fg<-setdiff(RDA_coordinates,train_fg)#le 1/3 restant est utilise pour la val
 
 #Axe 1
 linear_model1<-lm( RDA1 ~ pC + cn + pH + NPP + map + mat + forest + conifer + relEM +P + K + Ca + Mg, data=train_fg)
+
 summary(linear_model1)#significativite : RelEM***, mat(.), intercxept(*)
 # forest coeff = 0.1
 RsquareAdj(linear_model1)#42% de variance explique par le modele en R² ajuste (46% sinon, coherent avec la rda de l'autre script, cf explo-data-fambact_averyll.R)
+
+
 #Axe 2
 linear_model2<-lm( RDA2 ~ pC + cn + pH + NPP + map + mat + forest + conifer + relEM +P + K + Ca + Mg, data=train_fg)
+
 summary(linear_model2)# sign n: cn (.), estimate (*)
 #gd coeff : Ca = 0.35, NPP=0.32, map=-0.31
 #variance expliquee par le modele : 8.5% av R² ajuste (20% sinon)
 
+
 #Axe 3
 linear_model3<-lm( RDA3 ~ pC + cn + pH + NPP + map + mat + forest + conifer + relEM +P + K + Ca + Mg, data=train_fg)
+
 summary(linear_model3)#Ph, Conifer (*), K (.)
 #coeff : K=0.55; conifer = 0.37
 RsquareAdj(linear_model3)#R² adj = 8.8% (27% variance sinon)
 
+
 #Ajout méthodes complémentaires type lasso etc. (optionnel)
 linear_model_qr <-lm( RDA1 ~ pC + cn + pH + NPP + map + mat + forest + conifer + relEM +P + K + Ca + Mg, data=train_fg, method = "qr")
 # R² ajuste = 0.429 (54% sinon )
+# à ajouter dans une autre boucle pour comparer les différents Monte Carlo
+
+#Extraction des coefficients et calcul des Y^ ----
+
+#Calcul de la distance (RMSE) ----
+
+#Test meilleur score et enregistrer ----
+
+#(En )
+
 
 #DRAFT PREDIRE LES obs de VALIDATION a partir de LM1 -----
 predict (linear_model1, newdata = valid )#s$class
