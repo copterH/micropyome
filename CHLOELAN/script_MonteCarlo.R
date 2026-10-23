@@ -83,7 +83,6 @@ summary(linear_model1)#significativite : RelEM***, mat(.), intercxept(*)
 # forest coeff = 0.1
 RsquareAdj(linear_model1)#42% de variance explique par le modele en R² ajuste (46% sinon, coherent avec la rda de l'autre script, cf explo-data-fambact_averyll.R)
 
-
 #Axe 2
 linear_model2<-lm( RDA2 ~ pC + cn + pH + NPP + map + mat + forest + conifer + relEM +P + K + Ca + Mg, data=train_fg)
 
@@ -91,14 +90,12 @@ summary(linear_model2)# sign n: cn (.), estimate (*)
 #gd coeff : Ca = 0.35, NPP=0.32, map=-0.31
 #variance expliquee par le modele : 8.5% av R² ajuste (20% sinon)
 
-
 #Axe 3
 linear_model3<-lm( RDA3 ~ pC + cn + pH + NPP + map + mat + forest + conifer + relEM +P + K + Ca + Mg, data=train_fg)
 
 summary(linear_model3)#Ph, Conifer (*), K (.)
 #coeff : K=0.55; conifer = 0.37
 RsquareAdj(linear_model3)#R² adj = 8.8% (27% variance sinon)
-
 
 #Ajout méthodes complémentaires type lasso etc. (optionnel)
 linear_model_qr <-lm( RDA1 ~ pC + cn + pH + NPP + map + mat + forest + conifer + relEM +P + K + Ca + Mg, data=train_fg, method = "qr")
@@ -114,8 +111,15 @@ linear_model_qr <-lm( RDA1 ~ pC + cn + pH + NPP + map + mat + forest + conifer +
 #Test meilleur score et enregistrer ----
 
 if(score_new<score) {
-  lm_amelio <- matrix(c(), nrow = 3)
-  score <- score_new
+  #On enregistre les coefficients des LM
+  coef1 <- coef(linear_model1)
+  coef2 <- coef(linear_model2)
+  coef3 <- coef(linear_model3)
+  
+  lm_amelio <- matrix(c(coef1, coef2, coef3), ncol=3)
+  #Mise à jour du meilleur modèle
+  #matrice qui contient tous les coefficients des 3 LM, colonne 1 = LM1 etc.
+  score <- score_new #Mise à jour du meilleur score
 }
 
 
