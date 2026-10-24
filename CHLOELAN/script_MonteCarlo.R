@@ -87,7 +87,7 @@ RDA_coordinates<-merge(RDA_coordinates,env_observed,by=0)
 #MONTE-CARLO----
 #Rq: pour l'instant pas de boucle je veux voir si ça fonctionne déjà sans
 
-##Initialisation
+##Initialisation ----
 
 
 #création de deux groupes pour l'entrainement(train) et la validation croisée(val)
@@ -96,7 +96,8 @@ train_fg<-RDA_coordinates %>% sample_frac(2/3) #on prend les coordonnees de 2/3 
 val_fg<-setdiff(RDA_coordinates,train_fg)#le 1/3 restant est utilise pour la validation(32li)
 
 #Initialisation score (done) et lm_amelio
-score <- 100
+score <- 100 #à voir si on garde cette valeur initiale?
+# besoin d'initialiser lm_amelio ?
 
 ##Modèle linéaire -----
 
@@ -127,14 +128,6 @@ linear_model_qr <-lm( RDA1 ~ pC + cn + pH + NPP + map + mat + forest + conifer +
 # R² ajuste = 0.429 (54% sinon )
 # à ajouter dans une autre boucle pour comparer les différents Monte Carlo
 
-
-#Extraction des coefficients et calcul des Y^ (Eli's version) ----
-#On enregistre les coefficients des LM
-coef1 <- coef(linear_model1)
-coef2 <- coef(linear_model2)
-coef3 <- coef(linear_model3)
-
-#Calcul des Y^
 
 
 
@@ -206,7 +199,7 @@ score_new<-sqrt(mean((y1_est$RDA1 - y1_est$y_est)^2))
 #Test meilleur score et enregistrement ----
 
 if(score_new<score) {
-  lm_amelio <- matrix(c(coef1, coef2, coef3), ncol=3)
+  lm_amelio <- coef
   #Mise à jour du meilleur modèle
   #matrice qui contient tous les coefficients des 3 LM, colonne 1 = LM1 etc.
   score <- score_new #Mise à jour du meilleur score
