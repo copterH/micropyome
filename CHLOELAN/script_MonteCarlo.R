@@ -87,8 +87,8 @@ RDA_coordinates<-merge(RDA_coordinates,env_observed,by=0)
 #MONTE-CARLO----
 #Rq: pour l'instant pas de boucle je veux voir si ça fonctionne déjà sans
 
-##Initialisation ----
 
+##Initialisation ----
 
 #création de deux groupes pour l'entrainement(train) et la validation croisée(val)
 
@@ -213,8 +213,108 @@ if(score_new<score) {
 
 
 
+#BOUCLE ----
+B <- 100
+#Initialisation score (done) et lm_amelio
+score <- 100 #à voir si on garde cette valeur initiale?
+# besoin d'initialiser lm_amelio ?
 
-
+for (i in 1:B){
+  
+  ##Initialisation ----
+  
+  #création de deux groupes pour l'entrainement(train) et la validation croisée(val)
+  
+  train_fg<-RDA_coordinates %>% sample_frac(2/3) #on prend les coordonnees de 2/3 des data d'entrainement (96li)
+  val_fg<-setdiff(RDA_coordinates,train_fg)#le 1/3 restant est utilise pour la validation(32li)
+  
+  
+  ##Modèle linéaire -----
+  
+  #Axe 1
+  linear_model1<-lm( RDA1 ~ pC + cn + pH + NPP + map + mat + forest + conifer + relEM +P + K + Ca + Mg, data=train_fg)
+  #Axe 2
+  linear_model2<-lm( RDA2 ~ pC + cn + pH + NPP + map + mat + forest + conifer + relEM +P + K + Ca + Mg, data=train_fg)
+  #Axe 3
+  linear_model3<-lm( RDA3 ~ pC + cn + pH + NPP + map + mat + forest + conifer + relEM +P + K + Ca + Mg, data=train_fg)
+  
+  ##Extraction des coefficients et calcul des Y^ ----
+  coef<-data.frame("RDA1_coef"=linear_model1$coefficients, 
+                   "RDA2_coef"=linear_model2$coefficients,
+                   "RDA3_coef"=linear_model3$coefficients) %>%
+    t() %>% as.data.frame()
+  
+  cols<-intersect(names(coef), names(val_fg)) #select all factors coefficients 
+  
+  ###Y^  Axe 1 ----
+  y1_est<-val_fg %>% 
+    
+    #1. Multiplication of coefficient * values
+    mutate(
+      across( #across : apply function to multiple columns
+        all_of(cols), #were to apply it
+        ~ .x * as.numeric(coef[['RDA1_coef',cur_column()]]))) %>% #which function. Here multiply the column by the coefficient factor
+    
+    #2. Sum of coefficient and add intercept
+    mutate(y_est=rowSums(across(all_of(cols)))) %>%
+    mutate(y_est, y_est=y_est + as.numeric(coef[['RDA1_coef', '(Intercept)']])) %>%
+    
+    #3. Select to have only RDA1, y1_est
+    select(Row.names,RDA1,y_est)
+  
+  
+  ###Y^  Axe 2 ----
+  y2_est<-val_fg %>% 
+    
+    #1. Multiplication of coefficient * values
+    mutate(
+      across( #across : apply function to multiple columns
+        all_of(cols), #were to apply it
+        ~ .x * as.numeric(coef[['RDA2_coef',cur_column()]]))) %>% #which function. Here multiply the column by the coefficient factor
+    
+    #2. Sum of coefficient and add intercept
+    mutate(y_est=rowSums(across(all_of(cols)))) %>%
+    mutate(y_est, y_est=y_est + as.numeric(coef[['RDA2_coef', '(Intercept)']])) %>%
+    
+    #3. Select to have only RDA1, y1_est
+    select(Row.names,RDA2,y_est)
+  
+  
+  ###Y^  Axe 3 ----
+  y3_est<-val_fg %>% 
+    
+    #1. Multiplication of coefficient * values
+    mutate(
+      across( #across : apply function to multiple columns
+        all_of(cols), #were to apply it
+        ~ .x * as.numeric(coef[['RDA3_coef',cur_column()]]))) %>% #which function. Here multiply the column by the coefficient factor
+    
+    #2. Sum of coefficient and add intercept
+    mutate(y_est=rowSums(across(all_of(cols)))) %>%
+    mutate(y_est, y_est=y_est + as.numeric(coef[['RDA3_coef', '(Intercept)']])) %>%
+    
+    #3. Select to have only RDA1, y1_est
+    select(Row.names,RDA3,y_est)
+  
+  
+  ##Calcul de la distance (RMSE) ----
+  
+  #RMSE
+  score_new<-sqrt(mean((y1_est$RDA1 - y1_est$y_est)^2)) 
+  
+  #Test meilleur score et enregistrement ----
+  
+  if(score_new<score) {
+    lm_amelio <- coef
+    #Mise à jour du meilleur modèle
+    #matrice qui contient tous les coefficients des 3 LM, colonne 1 = LM1 etc.
+    score <- score_new #Mise à jour du meilleur score
+    
+  }
+  
+}
+print(lm_amelio)
+print(score)
 
 
 #DRAFT PREDIRE LES obs de VALIDATION a partir de LM1 -----
