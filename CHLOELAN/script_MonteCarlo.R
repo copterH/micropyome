@@ -194,7 +194,7 @@ y3_est<-val_fg %>%
 ##Calcul de la distance (RMSE) ----
 
 #RMSE
-score_new<-sqrt(mean((y1_est$RDA1 - y1_est$y_est)^2)) 
+score_new<-sqrt(mean((y1_est$RDA1 - y1_est$y_est)^2))
 
 #Test meilleur score et enregistrement ----
 
@@ -206,8 +206,78 @@ if(score_new<score) {
 }
 
 
+
+
+
+
+
 #EVALUATION FINALE (En dehors de la boucle) ----
-# Calcul des scores, à minima RMSE
+
+##Calcul des Y^ de l'évaluation ----
+############# ATTENTION NE MARCHE PAS, ENCORE EN TEST
+# A adapter avec le jeu de donnée test final
+
+###Y^  Axe 1 ----
+y1_est_final<-test_final_fg %>% 
+  
+  #1. Multiplication of coefficient * values
+  mutate(
+    across( #across : apply function to multiple columns
+      all_of(cols), #were to apply it
+      ~ .x * as.numeric(coef[['RDA1_coef',cur_column()]]))) %>% #which function. Here multiply the column by the coefficient factor
+  
+  #2. Sum of coefficient and add intercept
+  mutate(y_est=rowSums(across(all_of(cols)))) %>%
+  mutate(y_est, y_est=y_est + as.numeric(coef[['RDA1_coef', '(Intercept)']])) %>%
+  
+  #3. Select to have only RDA1, y1_est
+  select(Row.names,RDA1,y_est)
+
+
+###Y^  Axe 2 ----
+y2_est_final<-test_final_fg %>% 
+  
+  #1. Multiplication of coefficient * values
+  mutate(
+    across( #across : apply function to multiple columns
+      all_of(cols), #were to apply it
+      ~ .x * as.numeric(coef[['RDA2_coef',cur_column()]]))) %>% #which function. Here multiply the column by the coefficient factor
+  
+  #2. Sum of coefficient and add intercept
+  mutate(y_est=rowSums(across(all_of(cols)))) %>%
+  mutate(y_est, y_est=y_est + as.numeric(coef[['RDA2_coef', '(Intercept)']])) %>%
+  
+  #3. Select to have only RDA1, y1_est
+  select(Row.names,RDA2,y_est)
+
+
+###Y^  Axe 3 ----
+y3_est_final<-test_final_fg %>% 
+  
+  #1. Multiplication of coefficient * values
+  mutate(
+    across( #across : apply function to multiple columns
+      all_of(cols), #were to apply it
+      ~ .x * as.numeric(coef[['RDA3_coef',cur_column()]]))) %>% #which function. Here multiply the column by the coefficient factor
+  
+  #2. Sum of coefficient and add intercept
+  mutate(y_est=rowSums(across(all_of(cols)))) %>%
+  mutate(y_est, y_est=y_est + as.numeric(coef[['RDA3_coef', '(Intercept)']])) %>%
+  
+  #3. Select to have only RDA1, y1_est
+  select(Row.names,RDA3,y_est)
+
+
+# RMSE
+score_final <- score_new<-sqrt(mean((y1_est$RDA1 - y1_est$y_est)^2))
+
+
+
+
+
+
+
+
 
 
 
