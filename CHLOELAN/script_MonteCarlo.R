@@ -5,10 +5,14 @@
 
 #PREPARATION DE L'ESPACE DE TRAVAIL----
 
-library (tidyverse)
-library(vegan)
+library (tidyverse) #manipulation de données
+library(vegan) #RDA
 set.seed(123)
 library(Metrics)
+
+
+
+
 
 
 #IMPORTATION DES DONNEES----
@@ -19,6 +23,12 @@ row.names(file_fg)<-file_fg[,1]#on renomme les indices par la première colonne
 ##Environmental parameters----
 file_env<-data.frame(read_csv("13_variables_averyll.csv"))
 row.names(file_env)<-file_env[,1]
+
+
+
+
+
+
 
 #SELECTION D'UN SOUS ENSEMBLE POUR L'EVALUATION FINALE----
 test_final_fg<-file_fg %>% sample_frac(.25)#on prend 25% du jeu de donnees pr le test final
@@ -36,6 +46,11 @@ file_env<-select(file_env,-1)
 ##Sélection du sous ensemble pour les paramètres environnementaux----
 test_final_env<- file_env %>% filter(row.names(file_env) %in% sample_final)
 env_observed<-setdiff(file_env,test_final_env)
+
+
+
+
+
 
 #RDA----
 RDA <- rda(fg_observed ~ pC + cn + pH + NPP + map + mat + forest + conifer + relEM +P + K + Ca + Mg, 
@@ -63,9 +78,16 @@ plot(RDA, display = "wa")#points
 RDA_coordinates<-merge(RDA_coordinates,env_observed,by=0)
 
 
+
+
+
+
+
+
 #MONTE-CARLO----
 #Rq: pour l'instant pas de boucle je veux voir si ça fonctionne déjà sans
 
+##Initialisation
 
 
 #création de deux groupes pour l'entrainement(train) et la validation croisée(val)
@@ -76,7 +98,7 @@ val_fg<-setdiff(RDA_coordinates,train_fg)#le 1/3 restant est utilise pour la val
 #Initialisation score (done) et lm_amelio
 score <- 100
 
-#modèle linéaire -----
+##Modèle linéaire -----
 
 #Axe 1
 linear_model1<-lm( RDA1 ~ pC + cn + pH + NPP + map + mat + forest + conifer + relEM +P + K + Ca + Mg, data=train_fg)
@@ -100,11 +122,13 @@ summary(linear_model3)#Ph, Conifer (*), K (.)
 RsquareAdj(linear_model3)#R² adj = 8.8% (27% variance sinon)
 
 #Ajout méthodes complémentaires type lasso etc. (optionnel)
+
 linear_model_qr <-lm( RDA1 ~ pC + cn + pH + NPP + map + mat + forest + conifer + relEM +P + K + Ca + Mg, data=train_fg, method = "qr")
 # R² ajuste = 0.429 (54% sinon )
 # à ajouter dans une autre boucle pour comparer les différents Monte Carlo
 
-#Extraction des coefficients et calcul des Y^ ----
+
+#Extraction des coefficients et calcul des Y^ (Eli's version) ----
 #On enregistre les coefficients des LM
 coef1 <- coef(linear_model1)
 coef2 <- coef(linear_model2)
@@ -113,12 +137,71 @@ coef3 <- coef(linear_model3)
 #Calcul des Y^
 
 
-#Calcul de la distance (RMSE) ----
 
-score_new <- rmse(data$actual, data$predicted) #(je mets ça là pour qu'on ait le même nom de variable)
-#data$actual c'est les coordonnées de la RDA j'imagine
-#data$predicted c'est les Y^
+##Extraction des coefficients et calcul des Y^ (Chloe's version)----
+coef<-data.frame("RDA1_coef"=linear_model1$coefficients, 
+                 "RDA2_coef"=linear_model2$coefficients,
+                 "RDA3_coef"=linear_model3$coefficients) %>%
+  t() %>% as.data.frame()
 
+cols<-intersect(names(coef), names(val_fg)) #select all factors coefficients 
+
+###Y^  Axe 1 ----
+y1_est<-val_fg %>% 
+  
+  #1. Multiplication of coefficient * values
+  mutate(
+    across( #across : apply function to multiple columns
+      all_of(cols), #were to apply it
+      ~ .x * as.numeric(coef[['RDA1_coef',cur_column()]]))) %>% #which function. Here multiply the column by the coefficient factor
+  
+  #2. Sum of coefficient and add intercept
+  mutate(y_est=rowSums(across(all_of(cols)))) %>%
+  mutate(y_est, y_est=y_est + as.numeric(coef[['RDA1_coef', '(Intercept)']])) %>%
+  
+  #3. Select to have only RDA1, y1_est
+  select(Row.names,RDA1,y_est)
+
+
+###Y^  Axe 2 ----
+y2_est<-val_fg %>% 
+  
+  #1. Multiplication of coefficient * values
+  mutate(
+    across( #across : apply function to multiple columns
+      all_of(cols), #were to apply it
+      ~ .x * as.numeric(coef[['RDA2_coef',cur_column()]]))) %>% #which function. Here multiply the column by the coefficient factor
+  
+  #2. Sum of coefficient and add intercept
+  mutate(y_est=rowSums(across(all_of(cols)))) %>%
+  mutate(y_est, y_est=y_est + as.numeric(coef[['RDA2_coef', '(Intercept)']])) %>%
+  
+  #3. Select to have only RDA1, y1_est
+  select(Row.names,RDA2,y_est)
+
+
+###Y^  Axe 3 ----
+y3_est<-val_fg %>% 
+  
+  #1. Multiplication of coefficient * values
+  mutate(
+    across( #across : apply function to multiple columns
+      all_of(cols), #were to apply it
+      ~ .x * as.numeric(coef[['RDA3_coef',cur_column()]]))) %>% #which function. Here multiply the column by the coefficient factor
+  
+  #2. Sum of coefficient and add intercept
+  mutate(y_est=rowSums(across(all_of(cols)))) %>%
+  mutate(y_est, y_est=y_est + as.numeric(coef[['RDA3_coef', '(Intercept)']])) %>%
+  
+  #3. Select to have only RDA1, y1_est
+  select(Row.names,RDA3,y_est)
+
+
+  
+##Calcul de la distance (RMSE) ----
+
+#RMSE
+score_new<-sqrt(mean((y1_est$RDA1 - y1_est$y_est)^2)) 
 
 #Test meilleur score et enregistrement ----
 
@@ -132,6 +215,12 @@ if(score_new<score) {
 
 #EVALUATION FINALE (En dehors de la boucle) ----
 # Calcul des scores, à minima RMSE
+
+
+
+
+
+
 
 
 
