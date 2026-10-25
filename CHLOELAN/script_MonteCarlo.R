@@ -280,7 +280,9 @@ y3_est_final<-test_final_fg %>%
 
 
 # RMSE
-score_final <- score_new<-sqrt(mean((y1_est$RDA1 - y1_est$y_est)^2))
+score_final <- sqrt(mean((y1_est$RDA1 - y1_est$y_est)^2) +
+                      mean((y2_est$RDA2 - y2_est$y_est)^2) +
+                      mean((y3_est$RDA3 - y3_est$y_est)^2))
 
 
 
