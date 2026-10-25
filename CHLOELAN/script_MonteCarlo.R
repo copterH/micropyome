@@ -196,6 +196,17 @@ y3_est<-val_fg %>%
 #RMSE
 score_new<-sqrt(mean((y1_est$RDA1 - y1_est$y_est)^2))
 
+#Comment coombiner axes 1, 2 et 3 ?
+#Proposition 1:
+score_new_1<-sqrt(mean((y1_est$RDA1 - y1_est$y_est)^2)) +
+  sqrt(mean((y2_est$RDA2 - y2_est$y_est)^2)) +
+  sqrt(mean((y3_est$RDA3 - y3_est$y_est)^2))
+
+#Proposition 2:
+score_new_2<-sqrt(mean((y1_est$RDA1 - y1_est$y_est)^2) +
+  mean((y2_est$RDA2 - y2_est$y_est)^2) +
+  mean((y3_est$RDA3 - y3_est$y_est)^2))
+
 #Test meilleur score et enregistrement ----
 
 if(score_new<score) {
