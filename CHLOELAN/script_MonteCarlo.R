@@ -1,16 +1,18 @@
-# author: A. Baron, C. Bres, E. Desnyder
-#Machine Learning for Biology Project
+"
+author: A. Baron, C. Bres, E. Desnyder
+Machine Learning for Biology Project
 
+"
 
 
 #PREPARATION DE L'ESPACE DE TRAVAIL----
 
 library (tidyverse) #manipulation de données
 library(vegan) #RDA
-set.seed(123)
 library(Metrics)
+library(cv)
 
-
+set.seed(123)
 
 
 
@@ -93,7 +95,7 @@ RDA_coordinates<-merge(RDA_coordinates,env_observed,by=0)
 #création de deux groupes pour l'entrainement(train) et la validation croisée(val)
 
 train_fg<-RDA_coordinates %>% sample_frac(2/3) #on prend les coordonnees de 2/3 des data d'entrainement (96li)
-val_fg<-setdiff(RDA_coordinates,train_fg)#le 1/3 restant est utilise pour la validation(32li)
+val_fg<-setdiff(RDA_coordinates,train_fg)#le 1/3 restant est utilise pour la validation (32li)
 
 #Initialisation score (done) et lm_amelio
 score <- 100 #à voir si on garde cette valeur initiale?
@@ -122,12 +124,11 @@ summary(linear_model3)#Ph, Conifer (*), K (.)
 #coeff : K=0.55; conifer = 0.37
 RsquareAdj(linear_model3)#R² adj = 8.8% (27% variance sinon)
 
-#Ajout méthodes complémentaires type lasso etc. (optionnel)
+"Ajout méthodes complémentaires type lasso etc. (optionnel)"
 
 linear_model_qr <-lm( RDA1 ~ pC + cn + pH + NPP + map + mat + forest + conifer + relEM +P + K + Ca + Mg, data=train_fg, method = "qr")
 # R² ajuste = 0.429 (54% sinon )
-# à ajouter dans une autre boucle pour comparer les différents Monte Carlo
-
+"à ajouter dans une autre boucle pour comparer les différents Monte Carlo"
 
 
 
@@ -401,8 +402,17 @@ print(score)
 
 
 #DRAFT PREDIRE LES obs de VALIDATION a partir de LM1 -----
-predict (linear_model1, newdata = valid )#s$class
-library("cv")
+# predict (linear_model1, newdata = valid )#s$class
+#axe 1 
+Y_final_est1<-predict (linear_model1, newdata = test_final_env )
+#axe 2
+Y_final_est2<-predict (linear_model2, newdata = test_final_env )
+
+#axe 3
+Y_final_est3<-predict (linear_model3, newdata = test_final_env )
+Table<- data.frame(Y_final_est1,Y_final_est2,Y_final_est3) # un test pour predict
+
+
 summary(cv(m.auto, k = "loo") ) # default method = "hatvalues"
 #> n-Fold Cross Validation
 #> method: hatvalues
@@ -413,10 +423,18 @@ summary(cv(m.auto, k = "loo", method = "naive"))
          
 #Autre ?----
 #fonction pour projeter, rdaout est le nom du modèle de rda----
-fitted_values_predict <- predict(rdaout, newdata=G, type="response")
+fitted_values_predict <- predict(RDA, x=env_observed, y=test_final_env, type="response") # ça marche pour test_final_env mais pas fg ni Table -> PAS CE QU'ON VEUT
+head(fitted_values_predict)
+head(test_final_fg)
+plot(RDA, display = c("species", "reg"))#inertie sur l'axe par variable Y : groupe fonctionnel
+plot(RDA, display = c("reg", "sp"))#biplot
+plot(RDA, display = "wa")
+points(Table[, 1:2], col = "red", pch = 19)  
 
 #test avorted pr ajouter nvelles donnees neon en plus de averyll
 fitted_values_predict_2 <- predict (RDA, newdata = fg_champi_neon_RDA1, type = "response")
+
 plot(fitted_values_predict_2)
 neon_13var
 fc_grp_neon
+
