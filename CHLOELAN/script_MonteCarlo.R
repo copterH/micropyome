@@ -7,7 +7,7 @@ Machine Learning for Biology Project
 
 #PREPARATION DE L'ESPACE DE TRAVAIL----
 
-library (tidyverse) #manipulation de données
+library(tidyverse) #manipulation de données
 library(vegan) #RDA
 library(Metrics)
 library(cv)
@@ -423,13 +423,14 @@ summary(cv(m.auto, k = "loo", method = "naive"))
          
 #Autre ?----
 #fonction pour projeter, rdaout est le nom du modèle de rda----
-fitted_values_predict <- predict(RDA, x=env_observed, y=test_final_env, type="response") # ça marche pour test_final_env mais pas fg ni Table -> PAS CE QU'ON VEUT
+fitted_values_predict <- predict(RDA, x=env_observed, y=test_final_env, type="wa") # ça marche pour test_final_env mais pas fg ni Table -> PAS CE QU'ON VEUT
 head(fitted_values_predict)
 head(test_final_fg)
 plot(RDA, display = c("species", "reg"))#inertie sur l'axe par variable Y : groupe fonctionnel
 plot(RDA, display = c("reg", "sp"))#biplot
 plot(RDA, display = "wa")
-points(Table[, 1:2], col = "red", pch = 19)  
+points(fitted_values_predict[,1:2], col = "red", pch = 19)
+points(Table[, 1:2], col = "blue", pch = 19)  
 
 #test avorted pr ajouter nvelles donnees neon en plus de averyll
 fitted_values_predict_2 <- predict (RDA, newdata = fg_champi_neon_RDA1, type = "response")
