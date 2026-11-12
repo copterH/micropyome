@@ -37,8 +37,10 @@ test_final_fg<-file_fg %>% sample_frac(.25)#on prend 25% du jeu de donnees pr le
 sample_final<-test_final_fg[,1]#nom de l'echantillon = col1 du tab
 fg_observed<-setdiff(file_fg,test_final_fg) #trouve toutes les lignes de file_fg (3/4 restants) qui ne sont pas dans le sous-ensemble de test : pour l'entrainement
 
-nrow(test_final_fg)*4#le sous-ensemble de test contient 1/4 des donnees du dataset initial
+nrow(test_final_fg)*4#le sous-ensemble de test contient 1/4 des donnees du dataset initial n = 19.248
 nrow(test_final_fg)+nrow(fg_observed) == nrow(file_fg)#somme des TRAIN+TEST = nb d'obs du dataset
+# summary(cv(m.auto, k = "loo", method = "naive"))         
+ 
 
 ##Nettoyage des données----
 test_final_fg <- select(test_final_fg,-1)
@@ -438,4 +440,3 @@ fitted_values_predict_2 <- predict (RDA, newdata = fg_champi_neon_RDA1, type = "
 plot(fitted_values_predict_2)
 neon_13var
 fc_grp_neon
-

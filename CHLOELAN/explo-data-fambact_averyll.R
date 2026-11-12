@@ -356,7 +356,7 @@ vif.cca(RDA_fg_param)
 anova(RDA_fg_param,by="margin")
 
 RDA_fg <-rda(fg ~ pH + relEM + conifer, 
-                   data = explain_fg, scale = TRUE)
+                   data = explain_fg, scale = TRUE)#Erreur dans colMeans(x, na.rm = TRUE) : 'x' must be numeric or complex
 
 RsquareAdj(RDA_fg)
 
