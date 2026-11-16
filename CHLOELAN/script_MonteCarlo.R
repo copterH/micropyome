@@ -17,7 +17,7 @@ set.seed(123)
 
 
 
-#IMPORTATION DES DONNEES----
+#IMPORTATION DES+   select(Row.names,RDA1,y_est) DONNEES----
 ##Functionnal groups----
 file_fg <- data.frame(read_csv("fg_observed_averyll.csv"))
 row.names(file_fg)<-file_fg[,1]#on renomme les indices par la première colonne
@@ -248,7 +248,7 @@ y1_est_final<-test_final_fg %>%
   select(Row.names,RDA1,y_est)
 
 
-###Y^  Axe 2 ----
+ ###Y^  Axe 2 ----
 y2_est_final<-test_final_fg %>% 
   
   #1. Multiplication of coefficient * values
@@ -439,3 +439,4 @@ fitted_values_predict_2 <- predict (RDA, newdata = fg_champi_neon_RDA1, type = "
 plot(fitted_values_predict_2)
 neon_13var
 fc_grp_neon
+
