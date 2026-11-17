@@ -14,9 +14,6 @@ library(cv)
 
 set.seed(123)
 
-
-
-
 #IMPORTATION DES DONNEES----
 ##Functionnal groups----
 file_fg <- data.frame(read_csv("fg_observed_averyll.csv"))
@@ -80,223 +77,6 @@ plot(RDA, display = "wa")#points
 ##Merge avec les variables environementales----
 
 RDA_coordinates<-merge(RDA_coordinates,env_observed,by=0)
-
-
-
-
-
-
-
-
-#MONTE-CARLO----
-#Rq: pour l'instant pas de boucle je veux voir si ça fonctionne déjà sans
-
-
-##Initialisation ----
-
-#création de deux groupes pour l'entrainement(train) et la validation croisée(val)
-
-train_fg<-RDA_coordinates %>% sample_frac(2/3) #on prend les coordonnees de 2/3 des data d'entrainement (96li)
-val_fg<-setdiff(RDA_coordinates,train_fg)#le 1/3 restant est utilise pour la validation (32li)
-
-#Initialisation score (done) et lm_amelio
-score <- 100 #à voir si on garde cette valeur initiale?
-# besoin d'initialiser lm_amelio ?
-
-##Modèle linéaire -----
-
-#Axe 1
-linear_model1<-lm( RDA1 ~ pC + cn + pH + NPP + map + mat + forest + conifer + relEM +P + K + Ca + Mg, data=train_fg)
-
-summary(linear_model1)#significativite : RelEM***, mat(.), intercxept(*)
-# forest coeff = 0.1
-RsquareAdj(linear_model1)#42% de variance explique par le modele en R² ajuste (46% sinon, coherent avec la rda de l'autre script, cf explo-data-fambact_averyll.R)
-
-#Axe 2
-linear_model2<-lm( RDA2 ~ pC + cn + pH + NPP + map + mat + forest + conifer + relEM +P + K + Ca + Mg, data=train_fg)
-
-summary(linear_model2)# sign n: cn (.), estimate (*)
-#gd coeff : Ca = 0.35, NPP=0.32, map=-0.31
-#variance expliquee par le modele : 8.5% av R² ajuste (20% sinon)
-
-#Axe 3
-linear_model3<-lm( RDA3 ~ pC + cn + pH + NPP + map + mat + forest + conifer + relEM +P + K + Ca + Mg, data=train_fg)
-
-summary(linear_model3)#Ph, Conifer (*), K (.)
-#coeff : K=0.55; conifer = 0.37
-RsquareAdj(linear_model3)#R² adj = 8.8% (27% variance sinon)
-
-"Ajout méthodes complémentaires type lasso etc. (optionnel)"
-
-linear_model_qr <-lm( RDA1 ~ pC + cn + pH + NPP + map + mat + forest + conifer + relEM +P + K + Ca + Mg, data=train_fg, method = "qr")
-# R² ajuste = 0.429 (54% sinon )
-"à ajouter dans une autre boucle pour comparer les différents Monte Carlo"
-
-
-
-##Extraction des coefficients et calcul des Y^ (Chloe's version)----
-coef<-data.frame("RDA1_coef"=linear_model1$coefficients, 
-                 "RDA2_coef"=linear_model2$coefficients,
-                 "RDA3_coef"=linear_model3$coefficients) %>%
-  t() %>% as.data.frame()
-
-cols<-intersect(names(coef), names(val_fg)) #select all factors coefficients 
-
-###Y^  Axe 1 ----
-y1_est<-val_fg %>% 
-  
-  #1. Multiplication of coefficient * values
-  mutate(
-    across( #across : apply function to multiple columns
-      all_of(cols), #were to apply it
-      ~ .x * as.numeric(coef[['RDA1_coef',cur_column()]]))) %>% #which function. Here multiply the column by the coefficient factor
-  
-  #2. Sum of coefficient and add intercept
-  mutate(y_est=rowSums(across(all_of(cols)))) %>%
-  mutate(y_est, y_est=y_est + as.numeric(coef[['RDA1_coef', '(Intercept)']])) %>%
-  
-  #3. Select to have only RDA1, y1_est
-  select(Row.names,RDA1,y_est)
-
-
-###Y^  Axe 2 ----
-y2_est<-val_fg %>% 
-  
-  #1. Multiplication of coefficient * values
-  mutate(
-    across( #across : apply function to multiple columns
-      all_of(cols), #were to apply it
-      ~ .x * as.numeric(coef[['RDA2_coef',cur_column()]]))) %>% #which function. Here multiply the column by the coefficient factor
-  
-  #2. Sum of coefficient and add intercept
-  mutate(y_est=rowSums(across(all_of(cols)))) %>%
-  mutate(y_est, y_est=y_est + as.numeric(coef[['RDA2_coef', '(Intercept)']])) %>%
-  
-  #3. Select to have only RDA1, y1_est
-  select(Row.names,RDA2,y_est)
-
-
-###Y^  Axe 3 ----
-y3_est<-val_fg %>% 
-  
-  #1. Multiplication of coefficient * values
-  mutate(
-    across( #across : apply function to multiple columns
-      all_of(cols), #were to apply it
-      ~ .x * as.numeric(coef[['RDA3_coef',cur_column()]]))) %>% #which function. Here multiply the column by the coefficient factor
-  
-  #2. Sum of coefficient and add intercept
-  mutate(y_est=rowSums(across(all_of(cols)))) %>%
-  mutate(y_est, y_est=y_est + as.numeric(coef[['RDA3_coef', '(Intercept)']])) %>%
-  
-  #3. Select to have only RDA1, y1_est
-  select(Row.names,RDA3,y_est)
-
-
-  
-##Calcul de la distance (RMSE) ----
-
-#RMSE
-score_new<-sqrt(mean((y1_est$RDA1 - y1_est$y_est)^2))
-
-#Comment coombiner axes 1, 2 et 3 ?
-#Proposition 1:
-score_new_1<-sqrt(mean((y1_est$RDA1 - y1_est$y_est)^2)) +
-  sqrt(mean((y2_est$RDA2 - y2_est$y_est)^2)) +
-  sqrt(mean((y3_est$RDA3 - y3_est$y_est)^2))
-
-#Proposition 2:
-score_new_2<-sqrt(mean((y1_est$RDA1 - y1_est$y_est)^2) +
-  mean((y2_est$RDA2 - y2_est$y_est)^2) +
-  mean((y3_est$RDA3 - y3_est$y_est)^2))
-
-#Test meilleur score et enregistrement ----
-
-if(score_new<score) {
-  lm_amelio <- coef
-  #Mise à jour du meilleur modèle
-  #matrice qui contient tous les coefficients des 3 LM, colonne 1 = LM1 etc.
-  score <- score_new #Mise à jour du meilleur score
-}
-
-
-
-
-
-
-
-#EVALUATION FINALE (En dehors de la boucle) ----
-
-##Calcul des Y^ de l'évaluation ----
-############# ATTENTION NE MARCHE PAS, ENCORE EN TEST
-# A adapter avec le jeu de donnée test final
-
-###Y^  Axe 1 ----
-y1_est_final<-test_final_fg %>% 
-  
-  #1. Multiplication of coefficient * values
-  mutate(
-    across( #across : apply function to multiple columns
-      all_of(cols), #were to apply it
-      ~ .x * as.numeric(coef[['RDA1_coef',cur_column()]]))) %>% #which function. Here multiply the column by the coefficient factor
-  
-  #2. Sum of coefficient and add intercept
-  mutate(y_est=rowSums(across(all_of(cols)))) %>%
-  mutate(y_est, y_est=y_est + as.numeric(coef[['RDA1_coef', '(Intercept)']])) %>%
-  
-  #3. Select to have only RDA1, y1_est
-  select(Row.names,RDA1,y_est)
-
-
-###Y^  Axe 2 ----
-y2_est_final<-test_final_fg %>% 
-  
-  #1. Multiplication of coefficient * values
-  mutate(
-    across( #across : apply function to multiple columns
-      all_of(cols), #were to apply it
-      ~ .x * as.numeric(coef[['RDA2_coef',cur_column()]]))) %>% #which function. Here multiply the column by the coefficient factor
-  
-  #2. Sum of coefficient and add intercept
-  mutate(y_est=rowSums(across(all_of(cols)))) %>%
-  mutate(y_est, y_est=y_est + as.numeric(coef[['RDA2_coef', '(Intercept)']])) %>%
-  
-  #3. Select to have only RDA1, y1_est
-  select(Row.names,RDA2,y_est)
-
-
-###Y^  Axe 3 ----
-y3_est_final<-test_final_fg %>% 
-  
-  #1. Multiplication of coefficient * values
-  mutate(
-    across( #across : apply function to multiple columns
-      all_of(cols), #were to apply it
-      ~ .x * as.numeric(coef[['RDA3_coef',cur_column()]]))) %>% #which function. Here multiply the column by the coefficient factor
-  
-  #2. Sum of coefficient and add intercept
-  mutate(y_est=rowSums(across(all_of(cols)))) %>%
-  mutate(y_est, y_est=y_est + as.numeric(coef[['RDA3_coef', '(Intercept)']])) %>%
-  
-  #3. Select to have only RDA1, y1_est
-  select(Row.names,RDA3,y_est)
-
-
-# RMSE
-score_final <- sqrt(mean((y1_est$RDA1 - y1_est$y_est)^2) +
-                      mean((y2_est$RDA2 - y2_est$y_est)^2) +
-                      mean((y3_est$RDA3 - y3_est$y_est)^2))
-
-
-
-
-
-
-
-
-
-
-
 
 
 #BOUCLE ----
@@ -412,7 +192,7 @@ Y_final_est2<-predict (linear_model2, newdata = test_final_env )
 
 #axe 3
 Y_final_est3<-predict (linear_model3, newdata = test_final_env )
-Table<- data.frame(Y_final_est1,Y_final_est2,Y_final_est3) # un test pour predict
+Ypredict_lm<- data.frame(Y_final_est1,Y_final_est2,Y_final_est3) # un test pour predict
 
 
 summary(cv(m.auto, k = "loo") ) # default method = "hatvalues"
@@ -425,14 +205,21 @@ summary(cv(m.auto, k = "loo", method = "naive"))
          
 #Autre ?----
 #fonction pour projeter, rdaout est le nom du modèle de rda----
-fitted_values_predict <- predict(RDA, x=env_observed, y=test_final_env, type="wa") # ça marche pour test_final_env mais pas fg ni Table -> PAS CE QU'ON VEUT
+fitted_values_predict <- data.frame(predict(RDA, x=env_observed, y=test_final_env, type="wa"))
 head(fitted_values_predict)
 head(test_final_fg)
 plot(RDA, display = c("species", "reg"))#inertie sur l'axe par variable Y : groupe fonctionnel
 plot(RDA, display = c("reg", "sp"))#biplot
 plot(RDA, display = "wa")
 points(fitted_values_predict[,1:2], col = "red", pch = 19)
-points(Table[, 1:2], col = "blue", pch = 19)  
+points(Ypredict_lm[, 1:2], col = "blue", pch = 19)  
+
+
+Eval<-data.frame(row.names = c("Axe1","Axe2","Axe3"))
+Eval$RMSE<-c(sqrt(mean((fitted_values_predict$RDA1 - Ypredict_lm$Y_final_est1)^2)),
+             sqrt(mean((fitted_values_predict$RDA2 - Ypredict_lm$Y_final_est2)^2)),
+             sqrt(mean((fitted_values_predict$RDA3 - Ypredict_lm$Y_final_est3)^2)))
+
 
 #test avorted pr ajouter nvelles donnees neon en plus de averyll
 fitted_values_predict_2 <- predict (RDA, newdata = fg_champi_neon_RDA1, type = "response")
