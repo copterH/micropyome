@@ -301,9 +301,16 @@ score_final <- sqrt(mean((y1_est$RDA1 - y1_est$y_est)^2) +
 
 #BOUCLE ----
 B <- 100
-#Initialisation score (done) et lm_amelio
-score <- 100 #à voir si on garde cette valeur initiale?
-# besoin d'initialiser lm_amelio ?
+# Initialisation score
+score1 <- 100 #à voir si on garde cette valeur initiale?
+score2 <- 100
+score3 <- 100
+
+# Initialisation of lm_amelio
+lm_amelio<-data.frame("RDA1_coef"=0,
+                      "RDA2_coef"=0,
+                      "RDA3_coef"=0) %>%
+  t() %>% as.data.frame()
 
 for (i in 1:B){
   
@@ -386,16 +393,32 @@ for (i in 1:B){
   ##Calcul de la distance (RMSE) ----
   
   #RMSE
-  score_new<-sqrt(mean((y1_est$RDA1 - y1_est$y_est)^2)) 
+  score_new1<-sqrt(mean((y1_est$RDA1 - y1_est$y_est)^2))
+  score_new2<-sqrt(mean((y1_est$RDA1 - y1_est$y_est)^2))
+  score_new3<-sqrt(mean((y1_est$RDA1 - y1_est$y_est)^2))
+  
   
   #Test meilleur score et enregistrement ----
   
-  if(score_new<score) {
-    lm_amelio <- coef
+  if(score_new1<score1) {
+    lm_amelio1 <- coef$RDA1_coef
     #Mise à jour du meilleur modèle
     #matrice qui contient tous les coefficients des 3 LM, colonne 1 = LM1 etc.
-    score <- score_new #Mise à jour du meilleur score
-    
+    score1 <- score_new1 #Mise à jour du meilleur score
+  }
+  
+  if(score_new2<score2) {
+    lm_amelio2 <- coef$RDA2_coef
+    #Mise à jour du meilleur modèle
+    #matrice qui contient tous les coefficients des 3 LM, colonne 1 = LM1 etc.
+    score2 <- score_new2 #Mise à jour du meilleur score
+  }
+  
+  if(score_new3<score3) {
+    lm_amelio3 <- coef$RDA3_coef
+    #Mise à jour du meilleur modèle
+    #matrice qui contient tous les coefficients des 3 LM, colonne 1 = LM1 etc.
+    score3 <- score_new3 #Mise à jour du meilleur score
   }
   
 }
