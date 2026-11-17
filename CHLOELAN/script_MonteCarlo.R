@@ -14,10 +14,14 @@ library(cv)
 
 set.seed(123)
 
+<<<<<<< HEAD
+#IMPORTATION DES DONNEES----
+=======
 
 
 
 #IMPORTATION DES+   select(Row.names,RDA1,y_est) DONNEES----
+>>>>>>> origin/main
 ##Functionnal groups----
 file_fg <- data.frame(read_csv("fg_observed_averyll.csv"))
 row.names(file_fg)<-file_fg[,1]#on renomme les indices par la première colonne
@@ -82,6 +86,8 @@ plot(RDA, display = "wa")#points
 RDA_coordinates<-data.frame(merge(RDA_coordinates,env_observed,by=0))
 
 
+<<<<<<< HEAD
+=======
 
 
 
@@ -299,6 +305,7 @@ score_final <- sqrt(mean((y1_est$RDA1 - y1_est$y_est)^2) +
 
 
 
+>>>>>>> origin/main
 #BOUCLE ----
 B <- 100
 # Initialisation score
@@ -434,7 +441,7 @@ Y_final_est2<-predict (linear_model2, newdata = test_final_env )
 
 #axe 3
 Y_final_est3<-predict (linear_model3, newdata = test_final_env )
-Table<- data.frame(Y_final_est1,Y_final_est2,Y_final_est3) # un test pour predict
+Ypredict_lm<- data.frame(Y_final_est1,Y_final_est2,Y_final_est3) # un test pour predict
 
 
 summary(cv(m.auto, k = "loo") ) # default method = "hatvalues"
@@ -447,14 +454,21 @@ summary(cv(m.auto, k = "loo", method = "naive"))
          
 #Autre ?----
 #fonction pour projeter, rdaout est le nom du modèle de rda----
-fitted_values_predict <- predict(RDA, x=env_observed, y=test_final_env, type="wa") # ça marche pour test_final_env mais pas fg ni Table -> PAS CE QU'ON VEUT
+fitted_values_predict <- data.frame(predict(RDA, x=env_observed, y=test_final_env, type="wa"))
 head(fitted_values_predict)
 head(test_final_fg)
 plot(RDA, display = c("species", "reg"))#inertie sur l'axe par variable Y : groupe fonctionnel
 plot(RDA, display = c("reg", "sp"))#biplot
 plot(RDA, display = "wa")
 points(fitted_values_predict[,1:2], col = "red", pch = 19)
-points(Table[, 1:2], col = "blue", pch = 19)  
+points(Ypredict_lm[, 1:2], col = "blue", pch = 19)  
+
+
+Eval<-data.frame(row.names = c("Axe1","Axe2","Axe3"))
+Eval$RMSE<-c(sqrt(mean((fitted_values_predict$RDA1 - Ypredict_lm$Y_final_est1)^2)),
+             sqrt(mean((fitted_values_predict$RDA2 - Ypredict_lm$Y_final_est2)^2)),
+             sqrt(mean((fitted_values_predict$RDA3 - Ypredict_lm$Y_final_est3)^2)))
+
 
 #test avorted pr ajouter nvelles donnees neon en plus de averyll
 fitted_values_predict_2 <- predict (RDA, newdata = fg_champi_neon_RDA1, type = "response")
