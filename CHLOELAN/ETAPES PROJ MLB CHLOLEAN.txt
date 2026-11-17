@@ -35,3 +35,13 @@ EVALUATION/validation finale
 - projeter test-final dans axes RDA --> Y
 - applique le modele lineaire à test-final --> ^Y (Y estimé)
 - score modele
+
+RESTE A FAIRE SUITE A REUNION JEUDI 12 NOVEMBRE 
+
+- (1) comparer Y et Y^
+- (2) interpreter 
+- (3) tester avec autre modele (Ridge, K-NN?)
+- (4) Nettoyage code 
+
+(II) ORAL 
+- preparer slides (Anaëlle)
