@@ -96,9 +96,10 @@ score2 <- 100
 score3 <- 100
 
 # Initialisation of lm_amelio
-lm_amelio <- data.frame(colnames(c("RDA1_coef",
-                                   "RDA2_coef",
-                                   "RDA3_coef")))
+nul14 = rep(0,14)
+lm_amelio <- data.frame("RDA1_coef" = nul14,
+                        "RDA2_coef" = nul14,
+                        "RDA3_coef" = nul14)
 
 for (i in 1:B){
   
@@ -190,6 +191,8 @@ for (i in 1:B){
   
   
   #Test meilleur score et enregistrement ----
+  
+  coef <- coef %>% t() %>% as.data.frame()
   
   if(score_new1<score1) {
     lm_amelio$RDA1_coef <- coef$RDA1_coef
