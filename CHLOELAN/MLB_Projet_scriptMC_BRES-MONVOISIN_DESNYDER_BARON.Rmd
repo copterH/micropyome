@@ -191,11 +191,19 @@ for (i in 1:B){
   
   ##Calcul de la distance (RMSE) ----
   
-  #RMSE
-  score_new1<-sqrt(mean((y1_est$RDA1 - y1_est$y_est)^2))
+   #RMSE = Root mean square error
+  score_new1<-sqrt(mean((y1_est$RDA1 - y1_est$y_est)^2))# score 1 is lower 
   score_new2<-sqrt(mean((y2_est$RDA2 - y2_est$y_est)^2))
-  score_new3<-sqrt(mean((y3_est$RDA3 - y3_est$y_est)^2))
+  score_new3<-sqrt(mean((y3_est$RDA3 - y3_est$y_est)^2)) #score 3 is higher
   
+  #MAE = Mean Absolute Error
+score_mae_1 <- mae(y1_est$RDA1, y1_est$y_est ) #score 1 is lower
+score_mae_2 <- mae(y2_est$RDA2, y2_est$y_est)
+score_mae_3 <- mae (y3_est$RDA3, y3_est$y_est) #score 3 is higher
+```
+The score is lower (so error is lower) in RDA1, rather than RDA 2 and 3, so the estimation is better in RDA1. 
+
+``` {r}
   
   #Test meilleur score et enregistrement ----
   
