@@ -98,14 +98,21 @@ B <- 100
 
 # Initialisation of lm_amelio
 nul14 = rep(0,14)
-lm_amelio <- data.frame("RDA1_coef" = nul14,
-                        "RDA2_coef" = nul14,
-                        "RDA3_coef" = nul14)
+# lm_amelio <- data.frame("RDA1_coef" = nul14,
+#                         "RDA2_coef" = nul14,
+#                         "RDA3_coef" = nul14)
+
+list_lm <- data.frame("axe1" <- list(),
+                      "axe2" <- list(),
+                      "axe3" <- list())
+
 
 # créer une var qui enregistre tous les lm
 # créer une liste qui enregistre les MSE de chaque modèle testé
 
-scores <- list("score1" = list(), "score2" = list(),"score3" = list())
+scores <- data.frame("score1" = list(),
+                     "score2" = list(),
+                     "score3" = list())
 
 
 for (i in 1:B){
@@ -130,13 +137,13 @@ for (i in 1:B){
   linear_model3<-lm( RDA3 ~ pC + cn + pH + NPP + map + mat + forest + conifer +
                        relEM +P + K + Ca + Mg, data=train_fg)
   
-  ##Extraction des coefficients et calcul des Y^ ----
-  coef<-data.frame("RDA1_coef"=linear_model1$coefficients, 
-                   "RDA2_coef"=linear_model2$coefficients,
-                   "RDA3_coef"=linear_model3$coefficients) %>%
-    t() %>% as.data.frame()
+  ##Enregistrement des coefficients et calcul des Y^ ----
   
-  cols<-intersect(names(coef), names(val_fg)) #select all factors coefficients 
+  list_lm$axe1[[i]] <- linear_model1$coefficients
+  list_lm$axe2[[i]] <- linear_model2$coefficients
+  list_lm$axe3[[i]] <- linear_model3$coefficients
+  
+  # cols<-intersect(names(coef), names(val_fg)) #select all factors coefficients 
   
   ###Y^  Axe 1 ----
   y1_est<-val_fg %>% 
@@ -190,17 +197,12 @@ for (i in 1:B){
   
   
   
-  ##Calcul de la distance (RMSE) ----
+  ##Calcul de la distance (MSE) ----
   
+  MSE1<- mean((y1_est$RDA1 - y1_est$y_est)^2)
+  MSE2<- mean((y2_est$RDA2 - y2_est$y_est)^2)
+  MSE3<- mean((y3_est$RDA3 - y3_est$y_est)^2)
 
-  # MSE
-  score_new1<-sqrt(mean((y1_est$RDA1 - y1_est$y_est)^2))
-
-  #RMSE = Root mean square error
-  score_new1<-sqrt(mean((y1_est$RDA1 - y1_est$y_est)^2))# score 1 is lower 
-
-  score_new2<-sqrt(mean((y2_est$RDA2 - y2_est$y_est)^2))
-  score_new3<-sqrt(mean((y3_est$RDA3 - y3_est$y_est)^2)) #score 3 is higher
   
   
   #Test meilleur score et enregistrement ----
@@ -231,23 +233,14 @@ for (i in 1:B){
                       "score_2" = score2,
                       "score_3" = score3)
 }
+
+
 print(lm_amelio)
 print(score)
+
+
 #End of loop
 
-#MAE = Mean Absolute Error
-score_mae_1 <- mae(y1_est$RDA1, y1_est$y_est ) #score 1 is lower
-score_mae_2 <- mae(y2_est$RDA2, y2_est$y_est)
-score_mae_3 <- mae (y3_est$RDA3, y3_est$y_est) #score 3 is higher
-
-#distance matrix
-dist_1 <- y1_est$RDA1 - y1_est$y_est
-dist_2 <- y2_est$RDAD - y2_est$y_est
-dist_3 <- y3_est$RDA3 - y3_est$y_est
-#r2 = 1-(MSE/MST)
-
-r2_1 <- 1 - (score_new1^2)/ (mst (dist_1)
-                             r2_1 <- RsquareAdj(y1_est$RDA1, y1_est$y_est, n=32)
 
 
 
@@ -282,7 +275,22 @@ Eval<-data.frame(row.names = c("Axe1","Axe2","Axe3"))
 Eval$RMSE<-c(sqrt(mean((fitted_values_predict$RDA1 - Ypredict_lm$Y_final_est1)^2)),
              sqrt(mean((fitted_values_predict$RDA2 - Ypredict_lm$Y_final_est2)^2)),
              sqrt(mean((fitted_values_predict$RDA3 - Ypredict_lm$Y_final_est3)^2)))
-#MAE
+
+
+#MAE = Mean Absolute Error
+score_mae_1 <- mae(y1_est$RDA1, y1_est$y_est ) #score 1 is lower
+score_mae_2 <- mae(y2_est$RDA2, y2_est$y_est)
+score_mae_3 <- mae (y3_est$RDA3, y3_est$y_est) #score 3 is higher
+
+#distance matrix
+dist_1 <- y1_est$RDA1 - y1_est$y_est
+dist_2 <- y2_est$RDAD - y2_est$y_est
+dist_3 <- y3_est$RDA3 - y3_est$y_est
+#r2 = 1-(MSE/MST)
+
+r2_1 <- 1 - (score_new1^2)/ (mst (dist_1))
+r2_1 <- RsquareAdj(y1_est$RDA1, y1_est$y_est, n=32)
+
 
 #R2
 
