@@ -11,6 +11,7 @@ library(tidyverse) #manipulation de données
 library(vegan) #RDA
 library(Metrics)
 library(cv)
+library(ape)
 
 set.seed(123)
 
@@ -182,14 +183,27 @@ for (i in 1:B){
     select(Row.names,RDA3,y_est)
   
   
+  
   ##Calcul de la distance (RMSE) ----
   
-  #RMSE
-  score_new1<-sqrt(mean((y1_est$RDA1 - y1_est$y_est)^2))
+  #RMSE = Root mean square error
+  score_new1<-sqrt(mean((y1_est$RDA1 - y1_est$y_est)^2))# score 1 is lower 
   score_new2<-sqrt(mean((y2_est$RDA2 - y2_est$y_est)^2))
-  score_new3<-sqrt(mean((y3_est$RDA3 - y3_est$y_est)^2))
+  score_new3<-sqrt(mean((y3_est$RDA3 - y3_est$y_est)^2)) #score 3 is higher
   
-  
+  #MAE = Mean Absolute Error
+score_mae_1 <- mae(y1_est$RDA1, y1_est$y_est ) #score 1 is lower
+score_mae_2 <- mae(y2_est$RDA2, y2_est$y_est)
+score_mae_3 <- mae (y3_est$RDA3, y3_est$y_est) #score 3 is higher
+
+#distance matrix
+dist_1 <- y1_est$RDA1 - y1_est$y_est
+dist_2 <- y2_est$RDAD - y2_est$y_est
+dist_3 <- y3_est$RDA3 - y3_est$y_est
+  #r2 = 1-(MSE/MST)
+
+r2_1 <- 1 - (score_new1^2)/ (mst (dist_1)
+RsquareAdj(y1_est$RDA1, y1_est$y_est, m=31)
   #Test meilleur score et enregistrement ----
   
   coef <- coef %>% t() %>% as.data.frame()
@@ -260,9 +274,9 @@ Eval$RMSE<-c(sqrt(mean((fitted_values_predict$RDA1 - Ypredict_lm$Y_final_est1)^2
 
 
 #test avorted pr ajouter nvelles donnees neon en plus de averyll
-fitted_values_predict_2 <- predict (RDA, newdata = fg_champi_neon_RDA1, type = "response")
-
-plot(fitted_values_predict_2)
-neon_13var
-fc_grp_neon
+# fitted_values_predict_2 <- predict (RDA, newdata = fg_champi_neon_RDA1, type = "response")
+# 
+# plot(fitted_values_predict_2)
+# neon_13var
+# fc_grp_neon
 
