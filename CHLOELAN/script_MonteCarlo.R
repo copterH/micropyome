@@ -220,12 +220,13 @@ for (i in 1:B){
   
 }
 
+#End of loop
 
 print(list_lm)
 print(scores)
 
 
-#End of loop
+
 
 
 
@@ -263,6 +264,7 @@ Eval$RMSE<-c(sqrt(mean((fitted_values_predict$RDA1 - Ypredict_lm$Y_final_est1)^2
              sqrt(mean((fitted_values_predict$RDA3 - Ypredict_lm$Y_final_est3)^2)))
 
 
+
 #MAE = Mean Absolute Error
 score_mae_1 <- mae(y1_est$RDA1, y1_est$y_est ) #score 1 is lower
 score_mae_2 <- mae(y2_est$RDA2, y2_est$y_est)
@@ -274,11 +276,12 @@ dist_2 <- y2_est$RDAD - y2_est$y_est
 dist_3 <- y3_est$RDA3 - y3_est$y_est
 #r2 = 1-(MSE/MST)
 
-r2_1 <- 1 - (score_new1^2)/ (mst (dist_1))
+
+# r2_1 <- 1 - (score_new1^2)/ (mst (dist_1)) #TEST pour calcul du R²
 r2_1 <- RsquareAdj(y1_est$RDA1, y1_est$y_est, n=32)
+r2_2 <- RsquareAdj(y2_est$RDA2, y2_est$y_est, n = 32)
+r2_3 <- RsquareAdj(y3_est$RDA3, y2_est$y_est, n=32)
 
-
-#R2
 
 #test avorted pr ajouter nvelles donnees neon en plus de averyll
 # fitted_values_predict_2 <- predict (RDA, newdata = fg_champi_neon_RDA1, type = "response")
