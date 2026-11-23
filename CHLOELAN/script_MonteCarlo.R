@@ -4,11 +4,16 @@ Machine Learning for Biology Project
 
 "
 
-
 #PREPARATION DE L'ESPACE DE TRAVAIL----
 
-library(tidyverse) #manipulation de données
-library(vegan) #RDA
+# Cleaning environment
+
+rm(list=ls())
+
+# Importing libraries
+
+library(tidyverse) # data manipulation
+library(vegan) # RDA
 library(Metrics)
 library(cv)
 library(ape)
@@ -79,7 +84,7 @@ plot(RDA, display = "wa")#points
 
 ##Merge avec les variables environementales----
 
-RDA_coordinates<-data.frame(merge(RDA_coordinates,env_observed,by=0))
+RDA_coordinates<-data.frame(merge(RDA_coordinates,env_observed,by=0))%>% as.data.frame()
 
 
 
@@ -97,23 +102,18 @@ B <- 100
 # score3 <- 100
 
 # Initialisation of lm_amelio
-nul14 = rep(0,14)
+# nul14 = rep(0,14)
 # lm_amelio <- data.frame("RDA1_coef" = nul14,
 #                         "RDA2_coef" = nul14,
 #                         "RDA3_coef" = nul14)
 
-list_lm <- data.frame("axe1" <- list(),
-                      "axe2" <- list(),
-                      "axe3" <- list())
+les_lm <- data.frame(col.names=c("axe1", "axe2","axe3"))
 
 
 # créer une var qui enregistre tous les lm
 # créer une liste qui enregistre les MSE de chaque modèle testé
 
-scores <- data.frame("score1" = list(),
-                     "score2" = list(),
-                     "score3" = list())
-
+scores <- data.frame(colnames=c("score1", "score2", "score3"))
 
 for (i in 1:B){
   
@@ -121,7 +121,7 @@ for (i in 1:B){
   
   # création de deux groupes pour l'entrainement(train) et la validation croisée(val)
   
-  train_fg<-RDA_coordinates %>% sample_frac(2/3) #on prend les coordonnees de 2/3 des data d'entrainement (96li)
+  train_fg <- RDA_coordinates %>% sample_frac(2/3) #on prend les coordonnees de 2/3 des data d'entrainement (96li)
   val_fg<-setdiff(RDA_coordinates,train_fg)#le 1/3 restant est utilise pour la validation(32li)
   
   
@@ -137,13 +137,13 @@ for (i in 1:B){
   linear_model3<-lm( RDA3 ~ pC + cn + pH + NPP + map + mat + forest + conifer +
                        relEM +P + K + Ca + Mg, data=train_fg)
   
-  ##Enregistrement des coefficients et calcul des Y^ ----
+  ##Extraction des coefficients et calcul des Y^ ----
+  coef<-data.frame("RDA1_coef"=linear_model1$coefficients, 
+                   "RDA2_coef"=linear_model2$coefficients,
+                   "RDA3_coef"=linear_model3$coefficients) %>%
+    t() %>% as.data.frame()
   
-  list_lm$axe1[[i]] <- linear_model1$coefficients
-  list_lm$axe2[[i]] <- linear_model2$coefficients
-  list_lm$axe3[[i]] <- linear_model3$coefficients
-  
-  # cols<-intersect(names(coef), names(val_fg)) #select all factors coefficients 
+  cols<-intersect(names(coef), names(val_fg)) #select all factors coefficients
   
   ###Y^  Axe 1 ----
   y1_est<-val_fg %>% 
@@ -197,46 +197,32 @@ for (i in 1:B){
   
   
   
-  ##Calcul de la distance (MSE) ----
+  ## Calcul de la distance (MSE) ----
   
   MSE1<- mean((y1_est$RDA1 - y1_est$y_est)^2)
   MSE2<- mean((y2_est$RDA2 - y2_est$y_est)^2)
   MSE3<- mean((y3_est$RDA3 - y3_est$y_est)^2)
 
   
+  # Enregistrement des coefficients et des MSE ----
   
-  #Test meilleur score et enregistrement ----
+  ## Coefficients 
   
-  coef <- coef %>% t() %>% as.data.frame()
+  les_lm$axe1[i,] <- linear_model1$coefficients
+  les_lm$axe2[[i]] <- linear_model2$coefficients
+  les_lm$axe3[[i]] <- linear_model3$coefficients
   
-  if(score_new1<score1) {
-    lm_amelio$RDA1_coef <- coef$RDA1_coef
-    #Mise à jour du meilleur modèle
-    #matrice qui contient tous les coefficients des 3 LM, colonne 1 = LM1 etc.
-    score1 <- score_new1 #Mise à jour du meilleur score
-  }
+  ## MSE
   
-  if(score_new2<score2) {
-    lm_amelio$RDA2_coef <- coef$RDA2_coef
-    #Mise à jour du meilleur modèle
-    #matrice qui contient tous les coefficients des 3 LM, colonne 1 = LM1 etc.
-    score2 <- score_new2 #Mise à jour du meilleur score
-  }
+  scores$score1[[i]] <- MSE1
+  scores$score2[[i]] <- MSE2
+  scores$score3[[i]] <- MSE3
   
-  if(score_new3<score3) {
-    lm_amelio$RDA3_coef <- coef$RDA3_coef
-    #Mise à jour du meilleur modèle
-    #matrice qui contient tous les coefficients des 3 LM, colonne 1 = LM1 etc.
-    score3 <- score_new3 #Mise à jour du meilleur score
-  }
-  score <- data.frame("score_1" = score1,
-                      "score_2" = score2,
-                      "score_3" = score3)
 }
 
 
-print(lm_amelio)
-print(score)
+print(list_lm)
+print(scores)
 
 
 #End of loop
