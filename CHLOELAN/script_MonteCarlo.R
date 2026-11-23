@@ -91,15 +91,21 @@ RDA_coordinates<-data.frame(merge(RDA_coordinates,env_observed,by=0))
 #BOUCLE MONTE CARLO ----
 B <- 100
 # Initialisation score
-score1 <- 100 #à voir si on garde cette valeur initiale?
-score2 <- 100
-score3 <- 100
+# score1 <- 100 #à voir si on garde cette valeur initiale?
+# score2 <- 100
+# score3 <- 100
 
 # Initialisation of lm_amelio
 nul14 = rep(0,14)
 lm_amelio <- data.frame("RDA1_coef" = nul14,
                         "RDA2_coef" = nul14,
                         "RDA3_coef" = nul14)
+
+# créer une var qui enregistre tous les lm
+# créer une liste qui enregistre les MSE de chaque modèle testé
+
+scores <- list("score1" = list(), "score2" = list(),"score3" = list())
+
 
 for (i in 1:B){
   
@@ -184,7 +190,7 @@ for (i in 1:B){
   
   ##Calcul de la distance (RMSE) ----
   
-  #RMSE
+  # MSE
   score_new1<-sqrt(mean((y1_est$RDA1 - y1_est$y_est)^2))
   score_new2<-sqrt(mean((y2_est$RDA2 - y2_est$y_est)^2))
   score_new3<-sqrt(mean((y3_est$RDA3 - y3_est$y_est)^2))
@@ -220,6 +226,9 @@ for (i in 1:B){
 }
 print(lm_amelio)
 print(score)
+
+
+
 
 #DRAFT PREDIRE LES obs de VALIDATION a partir de LM1 -----
 # predict (linear_model1, newdata = valid )#s$class
