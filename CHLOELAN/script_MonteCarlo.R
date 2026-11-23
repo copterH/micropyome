@@ -203,7 +203,7 @@ dist_3 <- y3_est$RDA3 - y3_est$y_est
   #r2 = 1-(MSE/MST)
 
 r2_1 <- 1 - (score_new1^2)/ (mst (dist_1)
-RsquareAdj(y1_est$RDA1, y1_est$y_est, m=31)
+r2_1 <- RsquareAdj(y1_est$RDA1, y1_est$y_est, n=32)
   #Test meilleur score et enregistrement ----
   
   coef <- coef %>% t() %>% as.data.frame()
@@ -234,8 +234,10 @@ RsquareAdj(y1_est$RDA1, y1_est$y_est, m=31)
 }
 print(lm_amelio)
 print(score)
+#End of loop
 
-#DRAFT PREDIRE LES obs de VALIDATION a partir de LM1 -----
+
+#EVALUATION FINALE  -----
 # predict (linear_model1, newdata = valid )#s$class
 #axe 1 
 Y_final_est1<-predict (linear_model1, newdata = test_final_env )
@@ -246,17 +248,9 @@ Y_final_est2<-predict (linear_model2, newdata = test_final_env )
 Y_final_est3<-predict (linear_model3, newdata = test_final_env )
 Ypredict_lm<- data.frame(Y_final_est1,Y_final_est2,Y_final_est3) # un test pour predict
 
+   
 
-summary(cv(m.auto, k = "loo") ) # default method = "hatvalues"
-#> n-Fold Cross Validation
-#> method: hatvalues
-#> criterion: mse
-#> cross-validation criterion = 19.248
-summary(cv(m.auto, k = "loo", method = "naive"))         
-         ##comparer cette prediction avec les obs reelles ----
-         
-#Autre ?----
-#fonction pour projeter, rdaout est le nom du modèle de rda----
+#Projection des valeurs réelles et estimées----
 fitted_values_predict <- data.frame(predict(RDA, x=env_observed, y=test_final_env, type="wa"))
 head(fitted_values_predict)
 head(test_final_fg)
@@ -266,12 +260,15 @@ plot(RDA, display = "wa")
 points(fitted_values_predict[,1:2], col = "red", pch = 19)
 points(Ypredict_lm[, 1:2], col = "blue", pch = 19)  
 
-
+#Evaluation criteria
 Eval<-data.frame(row.names = c("Axe1","Axe2","Axe3"))
+#RMSE
 Eval$RMSE<-c(sqrt(mean((fitted_values_predict$RDA1 - Ypredict_lm$Y_final_est1)^2)),
              sqrt(mean((fitted_values_predict$RDA2 - Ypredict_lm$Y_final_est2)^2)),
              sqrt(mean((fitted_values_predict$RDA3 - Ypredict_lm$Y_final_est3)^2)))
+#MAE
 
+#R2
 
 #test avorted pr ajouter nvelles donnees neon en plus de averyll
 # fitted_values_predict_2 <- predict (RDA, newdata = fg_champi_neon_RDA1, type = "response")
@@ -279,4 +276,13 @@ Eval$RMSE<-c(sqrt(mean((fitted_values_predict$RDA1 - Ypredict_lm$Y_final_est1)^2
 # plot(fitted_values_predict_2)
 # neon_13var
 # fc_grp_neon
+
+#truc qui fonctionne pas on verra apres
+summary(cv(m.auto, k = "loo") ) # default method = "hatvalues"
+#> n-Fold Cross Validation
+#> method: hatvalues
+#> criterion: mse
+#> cross-validation criterion = 19.248
+summary(cv(m.auto, k = "loo", method = "naive"))         
+##comparer cette prediction avec les obs reelles ----
 
