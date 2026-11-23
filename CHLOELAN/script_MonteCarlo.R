@@ -120,7 +120,7 @@ for (i in 1:B){
                        relEM +P + K + Ca + Mg, data=train_fg)
   #Axe 3
   linear_model3<-lm( RDA3 ~ pC + cn + pH + NPP + map + mat + forest + conifer +
-                       relEM +P + K + Ca + Mg, data=train_fg)
+                       relEM +P + K + Ca + Mg, data=train_fg) 
   
   ##Extraction des coefficients et calcul des Y^ ----
   coef<-data.frame("RDA1_coef"=linear_model1$coefficients, 
