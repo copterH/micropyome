@@ -300,3 +300,155 @@ r3_3 <- RsquareAdj(sssy3_est$RDA3, y3_est$y_est, n=32)
 
 # MC WITH ELASTICNET ----
 
+# créer des dataframe qui enregistrent tous les lm
+
+m <- matrix(ncol = 0, nrow = B)
+full_lm1 <- data.frame(m)
+full_lm2 <- data.frame(m)
+full_lm3 <- data.frame(m)
+
+# créer un dataframe qui enregistre les MSE de chaque modèle testé
+
+n <- matrix(ncol = 0, nrow = 3)
+scores <- data.frame(n)
+
+for (i in 1:B){
+  
+  ## Initialisation ----
+  
+  # création de deux groupes pour l'entrainement(train) et la validation croisée(val)
+  
+  train_fg <- RDA_coordinates %>% sample_frac(2/3) #on prend les coordonnees de 2/3 des data d'entrainement (96li)
+  val_fg<-setdiff(RDA_coordinates,train_fg)#le 1/3 restant est utilise pour la validation(32li)
+  
+  
+  ## Search Grid over alpha -----
+  for (j in seq_along(alphas)) {
+    
+    #Linear model with Elastic net
+    #Axe 1
+    cv_fit1 <- cv.glmnet(train_fg[ , 5:ncol(train_fg)], 
+                        train_fg[ , "RDA1"], 
+                        alpha = alphas[j], nfolds = 10)
+    cv_results1$min_cvm[j] <- min(cv_fit1$cvm) #minimum cross validated error for each alpha
+    cv_results1$lambda_min[j] <- cv_fit1$lambda.min
+    
+    
+    #Axe 2
+    cv_fit2 <- cv.glmnet(train_fg[ , 5:ncol(train_fg)], 
+                         train_fg[ , "RDA2"], 
+                         alpha = alphas[j], nfolds = 10)
+    cv_results2$min_cvm[j] <- min(cv_fit2$cvm) #minimum cross validated error for each alpha
+    cv_results2$lambda_min[j] <- cv_fit2$lambda.min 
+
+    
+    #Axe 3
+    cv_fit3 <- cv.glmnet(train_fg[ , 5:ncol(train_fg)], 
+                         train_fg[ , "RDA3"], 
+                         alpha = alphas[j], nfolds = 10)
+    cv_results3$min_cvm[j] <- min(cv_fit3$cvm) #minimum cross validated error for each alpha
+    cv_results3$lambda_min[j] <- cv_fit3$lambda.min
+    
+    }
+  
+  
+  
+  ##Extraction des coefficients et calcul des Y^ ----
+  coef<-data.frame("RDA1_coef"=linear_model1$coefficients, 
+                   "RDA2_coef"=linear_model2$coefficients,
+                   "RDA3_coef"=linear_model3$coefficients) %>%
+    t() %>% as.data.frame()
+  
+  cols<-intersect(names(coef), names(val_fg)) #select all factors coefficients
+  
+  ###Y^  Axe 1 ----
+  y1_est<-val_fg %>% 
+    
+    #1. Multiplication of coefficient * values
+    mutate(
+      across( #across : apply function to multiple columns
+        all_of(cols), #were to apply it
+        ~ .x * as.numeric(coef[['RDA1_coef',cur_column()]]))) %>% #which function. Here multiply the column by the coefficient factor
+    
+    #2. Sum of coefficient and add intercept
+    mutate(y_est=rowSums(across(all_of(cols)))) %>%
+    mutate(y_est, y_est=y_est + as.numeric(coef[['RDA1_coef', '(Intercept)']])) %>%
+    
+    #3. Select to have only RDA1, y1_est
+    select(Row.names,RDA1,y_est)
+  
+  
+  ###Y^  Axe 2 ----
+  y2_est<-val_fg %>% 
+    
+    #1. Multiplication of coefficient * values
+    mutate(
+      across( #across : apply function to multiple columns
+        all_of(cols), #were to apply it
+        ~ .x * as.numeric(coef[['RDA2_coef',cur_column()]]))) %>% #which function. Here multiply the column by the coefficient factor
+    
+    #2. Sum of coefficient and add intercept
+    mutate(y_est=rowSums(across(all_of(cols)))) %>%
+    mutate(y_est, y_est=y_est + as.numeric(coef[['RDA2_coef', '(Intercept)']])) %>%
+    
+    #3. Select to have only RDA1, y1_est
+    select(Row.names,RDA2,y_est)
+  
+  
+  ###Y^  Axe 3 ----
+  y3_est<-val_fg %>% 
+    
+    #1. Multiplication of coefficient * values
+    mutate(
+      across( #across : apply function to multiple columns
+        all_of(cols), #were to apply it
+        ~ .x * as.numeric(coef[['RDA3_coef',cur_column()]]))) %>% #which function. Here multiply the column by the coefficient factor
+    
+    #2. Sum of coefficient and add intercept
+    mutate(y_est=rowSums(across(all_of(cols)))) %>%
+    mutate(y_est, y_est=y_est + as.numeric(coef[['RDA3_coef', '(Intercept)']])) %>%
+    
+    #3. Select to have only RDA1, y1_est
+    select(Row.names,RDA3,y_est)
+  
+  
+  
+  ## Calcul de la distance (MSE) ----
+  
+  MSE1<- mean((y1_est$RDA1 - y1_est$y_est)^2)
+  MSE2<- mean((y2_est$RDA2 - y2_est$y_est)^2)
+  MSE3<- mean((y3_est$RDA3 - y3_est$y_est)^2)
+  
+  
+  ## Enregistrement des coefficients et des MSE ----
+  
+  ## Coefficients 
+  
+  full_lm1 <- rbind(full_lm1, linear_model1$coefficients)
+  full_lm2 <- rbind(full_lm2, linear_model2$coefficients)
+  full_lm3 <- rbind(full_lm3, linear_model3$coefficients)
+  
+  ## MSE
+  
+  scores <- rbind(scores, c(MSE1, MSE2, MSE3))
+  
+  
+  
+}
+
+#End of loop
+
+
+#Creation of the final model : Mean of all coefficient.
+
+
+# Calcul of RMSE ----
+
+RMSE1 <- sqrt(sum(scores$score1)/B)
+RMSE2 <- sqrt(sum(scores$score2)/B)
+RMSE3 <- sqrt(sum(scores$score3)/B)
+
+print(RMSE1)
+print(RMSE2)
+print(RMSE3)
+
