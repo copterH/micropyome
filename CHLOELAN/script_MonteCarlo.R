@@ -111,6 +111,7 @@ scores <- data.frame(n)
 
 for (i in 1:B){
   
+  print(paste0(i,"/100"))
   ## Initialisation ----
   
   # création de deux groupes pour l'entrainement(train) et la validation croisée(val)
@@ -215,7 +216,7 @@ for (i in 1:B){
 }
 
 #End of loop
-
+#Proposition: la liste "cols" correspond exactement à ce vecteur
 colnames(full_lm1) <- c("pC", "cn", "pH", "NPP", "map", "mat", "forest", "conifer",
                         "relEM", "P", "K", "Ca", "Mg")
 colnames(full_lm2) <- c("pC", "cn", "pH", "NPP", "map", "mat", "forest", "conifer",
@@ -313,18 +314,18 @@ Eval$RMSE<-c(sqrt(mean((fitted_values_proj$RDA1 - Ypredict_lm$Y_final_est1)^2)),
 
 #MAE = Mean Absolute Error
 
-fitted_values_predict$RDA1 # Observed values of axis RDA1, in the Final Validation set
+fitted_values_proj$RDA1 # Observed values of axis RDA1, in the Final Validation set
 Ypredict_lm$Y_final_est1 # Predicted values of linear model 1, in the Final Validation set, only the values
 Y_final_est1 # Predicted values of linear model 1, in the Final Validation set, identifier of sample with values
 
-score_mae_1_final <- mae(fitted_values_predict$RDA1, Ypredict_lm$Y_final_est1) #
-score_mae_1_final_bis <- (1/(nrow(fitted_values_predict))) * sum(abs(fitted_values_predict$RDA1 - Ypredict_lm$Y_final_est1))
+score_mae_1_final <- mae(fitted_values_proj$RDA1, Ypredict_lm$Y_final_est1) #
+score_mae_1_final_bis <- (1/(nrow(fitted_values_proj))) * sum(abs(fitted_values_proj$RDA1 - Ypredict_lm$Y_final_est1))
 
 
-score_mae_2_final <- mae(fitted_values_predict$RDA2, Ypredict_lm$Y_final_est2)#compute the MAE score using the function mae{Metrics}
-score_mae_2_final_bis <- (1/(nrow(fitted_values_predict))) * sum(abs(fitted_values_predict$RDA2 - Ypredict_lm$Y_final_est2))#compute the MAE score manually, using the formula 1/N * sum|y_est - y^_est|
-score_mae_3_final <- mae (fitted_values_predict$RDA3, Ypredict_lm$Y_final_est3) #score 3 is higher
-score_mae_3_final_bis <- (1/(nrow(fitted_values_predict))) * sum(abs(fitted_values_predict$RDA3 - Ypredict_lm$Y_final_est3))
+score_mae_2_final <- mae(fitted_values_proj$RDA2, Ypredict_lm$Y_final_est2)#compute the MAE score using the function mae{Metrics}
+score_mae_2_final_bis <- (1/(nrow(fitted_values_proj))) * sum(abs(fitted_values_proj$RDA2 - Ypredict_lm$Y_final_est2))#compute the MAE score manually, using the formula 1/N * sum|y_est - y^_est|
+score_mae_3_final <- mae (fitted_values_proj$RDA3, Ypredict_lm$Y_final_est3) #score 3 is higher
+score_mae_3_final_bis <- (1/(nrow(fitted_values_proj))) * sum(abs(fitted_values_proj$RDA3 - Ypredict_lm$Y_final_est3))
 #print MAE values for 3 RDA axes in the Final Evaluation Set
 score_mae_1_final ; score_mae_2_final ; score_mae_3_final
 
@@ -358,7 +359,6 @@ mean(r2_3)
 # MC WITH ELASTICNET ----
 
 
-## Initialisation ----
 
 
 n <- matrix(ncol = 0, nrow = 3)
@@ -373,11 +373,13 @@ df_hp1 <- data.frame(best_alpha = NA, best_lambda = NA)
 df_hp2 <- data.frame(best_alpha = NA, best_lambda = NA)
 df_hp3 <- data.frame(best_alpha = NA, best_lambda = NA)
 
-B<-1000
+B<-100
 
 for (i in 1:B){
+  print(paste0(i,"/100"))
   
   ## Initialisation ----
+  
   #For choosing best parameters later
   cv_results1 <- data.frame(alpha = alphas, min_cvm = NA, lambda_min = NA)
   cv_results2 <- data.frame(alpha = alphas, min_cvm = NA, lambda_min = NA)
@@ -388,7 +390,6 @@ for (i in 1:B){
   
   train_fg <- RDA_coordinates %>% sample_frac(2/3) #on prend les coordonnees de 2/3 des data d'entrainement (96li)
   val_fg<-setdiff(RDA_coordinates,train_fg)#le 1/3 restant est utilise pour la validation(32li)
-  
   
   ## Search Grid over alpha -----
   for (j in seq_along(alphas)) {
@@ -444,63 +445,106 @@ for (i in 1:B){
   df_hp3[i,"best_lambda"]<-best_lambda3
 }
 
-#End of loop
-mean(df_hp1[,"best_alpha"])
-sd(df_hp1[,"best_alpha"])
-
-mean(df_hp2[,"best_alpha"])
-sd(df_hp2[,"best_alpha"])
-
-mean(df_hp3[,"best_alpha"])
-sd(df_hp3[,"best_alpha"])
-
-
-#Creation of the final model : Mean of all coefficient.
-
-
-# Calcul of RMSE ----
-
-RMSE1 <- sqrt(sum(scores$score1)/B)
-RMSE2 <- sqrt(sum(scores$score2)/B)
-RMSE3 <- sqrt(sum(scores$score3)/B)
-
-print(RMSE1)
-print(RMSE2)
-print(RMSE3)
-
-
 
 ## End Loop ----
 
 ### Calcul of the mean alpha and lambda ----
 
-final_alpha1 <- sum(df_hp1$best_alpha)/B
-final_lambda1 <- sum(df_hp1$best_lambda)/B
+summary(df_hp1)
+final_alpha1 <- mean(df_hp1[,"best_alpha"])
+print(final_alpha1)
+print(sd(df_hp1[,"best_alpha"]))
+final_lambda1 <- mean(df_hp1[,"best_lambda"])
 
-final_alpha2 <- sum(df_hp2$best_alpha)/B
-final_lambda2 <- sum(df_hp2$best_lambda)/B
 
-final_alpha3 <- sum(df_hp3$best_alpha)/B
-final_lambda3 <- sum(df_hp3$best_lambda)/B
+summary(df_hp2)
+final_alpha2 <- mean(df_hp2[,"best_alpha"])
+print(final_alpha2)
+print(sd(df_hp2[,"best_alpha"]))
+final_lambda2 <- mean(df_hp2[,"best_lambda"])
+
+summary(df_hp3) #Pb: bcp de valeurs très hautes qui gonglent la moyenne ->  est ce qu ela médiane serait mieux ?
+final_alpha3 <- mean(df_hp3[,"best_alpha"])
+print(final_alpha3)
+print(sd(df_hp3[,"best_alpha"]))
+final_lambda3 <- mean(df_hp3[,"best_lambda"])
 
 #### Return the best models ----
 
 # Axe 1
-EN_lm1 <- cv.glmnet(train_fg[,5:ncol(train_fg)],
+EN_lm1 <- cv.glmnet(as.matrix(train_fg[,5:ncol(train_fg)]),
                     train_fg[,"RDA1"],
                     alpha = final_alpha1, nfolds = 10)
 final_coefs1 <- coef(EN_lm1, s = "lambda.1se")
 
 # Axe 2
-EN_lm2 <- cv.glmnet(train_fg[,5:ncol(train_fg)],
+EN_lm2 <- cv.glmnet(as.matrix(train_fg[,5:ncol(train_fg)]),
                     train_fg[,"RDA2"],
                     alpha = final_alpha2, nfolds = 10)
 final_coefs2 <- coef(EN_lm2, s = "lambda.1se")
 
 # Axe 3
-EN_lm3 <- cv.glmnet(train_fg[,5:ncol(train_fg)],
+EN_lm3 <- cv.glmnet(as.matrix(train_fg[,5:ncol(train_fg)]),
                     train_fg[,"RDA3"],
                     alpha = final_alpha3, nfolds = 10)
 final_coefs3 <- coef(EN_lm3, s = "lambda.1se")
 
+## Calculation of Y^ ----
 
+###Y^  Axe 1 ----
+EN_y1_est_train<- RDA_coordinates %>% 
+  
+  #1. Multiplication of coefficient * values
+  mutate(
+    across( #across : apply function to multiple columns
+      all_of(cols), #were to apply it
+      ~ .x * as.numeric(final_coefs1[cur_column(),]))) %>% #which function. Here multiply the column by the coefficient factor
+  
+  #2. Sum of coefficient and add intercept
+  mutate(y_est=rowSums(across(all_of(cols)))) %>%
+  mutate(y_est, y_est=y_est + as.numeric(final_coefs1['(Intercept)', ])) %>%
+  
+  #3. Select to have only RDA1, y1_est
+  select(Row.names,RDA1,y_est)
+
+
+
+
+###Y^  Axe 2 ----
+EN_y2_est_train<- RDA_coordinates %>% 
+  
+  #1. Multiplication of coefficient * values
+  mutate(
+    across( #across : apply function to multiple columns
+      all_of(cols), #were to apply it
+      ~ .x * as.numeric(final_coefs2[cur_column(),]))) %>% #which function. Here multiply the column by the coefficient factor
+  
+  #2. Sum of coefficient and add intercept
+  mutate(y_est=rowSums(across(all_of(cols)))) %>%
+  mutate(y_est, y_est=y_est + as.numeric(final_coefs2['(Intercept)', ])) %>%
+  
+  #3. Select to have only RDA2, y2_est
+  select(Row.names,RDA2,y_est)
+
+
+###Y^  Axe 3 ----
+EN_y3_est_train<- RDA_coordinates %>% 
+  
+  #1. Multiplication of coefficient * values
+  mutate(
+    across( #across : apply function to multiple columns
+      all_of(cols), #were to apply it
+      ~ .x * as.numeric(final_coefs3[cur_column(),]))) %>% #which function. Here multiply the column by the coefficient factor
+  
+  #2. Sum of coefficient and add intercept
+  mutate(y_est=rowSums(across(all_of(cols)))) %>%
+  mutate(y_est, y_est=y_est + as.numeric(final_coefs3['(Intercept)', ])) %>%
+  
+  #3. Select to have only RDA3, y3_est
+  select(Row.names,RDA3,y_est)
+###RMSE ----
+EN_scores_train<-data.frame(row.names = c("Axe1","Axe2","Axe3"))
+
+EN_scores_train$RMSE<-c(sqrt(mean((EN_y1_est_train$RDA1 - EN_y1_est_train$y_est)^2)),
+             sqrt(mean((EN_y2_est_train$RDA2 - EN_y2_est_train$y_est)^2)),
+             sqrt(mean((EN_y3_est_train$RDA3 - EN_y3_est_train$y_est)^2)))
