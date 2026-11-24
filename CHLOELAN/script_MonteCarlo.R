@@ -303,16 +303,23 @@ Eval$RMSE<-c(sqrt(mean((fitted_values_predict$RDA1 - Ypredict_lm$Y_final_est1)^2
 
 
 #MAE = Mean Absolute Error
-Y_final_est1
-score_mae_1 <- mae(y1_est$RDA1, y1_est$y_est ) #score 1 is lower
-score_mae_1_bis <- (1/(nrow(y1_est))) * sum(abs(y1_est$RDA1 - y1_est$y_est))
-score_mae_2 <- mae(y2_est$RDA2, y2_est$y_est)#compute the MAE score using the function mae{Metrics}
-score_mae_2_bis <- (1/(nrow(y2_est))) * sum(abs(y2_est$RDA2 - y2_est$y_est))#compute the MAE score manually, using the formula 1/N * sum|y_est - y^_est|
-score_mae_3 <- mae (y3_est$RDA3, y3_est$y_est) #score 3 is higher
-score_mae_3_bis <- (1/(nrow(y3_est))) * sum(abs(y3_est$RDA3 - y3_est$y_est))
-#print MAE values for 3 RDA axes in the Final Evaluation Set
-score_mae_1 ; score_mae_2 ; score_mae_3
 
+fitted_values_predict$RDA1 # Observed values of axis RDA1, in the Final Validation set
+Ypredict_lm$Y_final_est1 # Predicted values of linear model 1, in the Final Validation set, only the values
+Y_final_est1 # Predicted values of linear model 1, in the Final Validation set, identifier of sample with values
+
+score_mae_1_final <- mae(fitted_values_predict$RDA1, Ypredict_lm$Y_final_est1) #
+score_mae_1_final_bis <- (1/(nrow(fitted_values_predict))) * sum(abs(fitted_values_predict$RDA1 - Ypredict_lm$Y_final_est1))
+
+
+score_mae_2_final <- mae(fitted_values_predict$RDA2, Ypredict_lm$Y_final_est2)#compute the MAE score using the function mae{Metrics}
+score_mae_2_final_bis <- (1/(nrow(fitted_values_predict))) * sum(abs(fitted_values_predict$RDA2 - Ypredict_lm$Y_final_est2))#compute the MAE score manually, using the formula 1/N * sum|y_est - y^_est|
+score_mae_3_final <- mae (fitted_values_predict$RDA3, Ypredict_lm$Y_final_est3) #score 3 is higher
+score_mae_3_final_bis <- (1/(nrow(fitted_values_predict))) * sum(abs(fitted_values_predict$RDA3 - Ypredict_lm$Y_final_est3))
+#print MAE values for 3 RDA axes in the Final Evaluation Set
+score_mae_1_final ; score_mae_2_final ; score_mae_3_final
+
+#> score_mae_1_valid_fc ; score_mae_2_valid_fc ; score_mae_3_valid_fc
 #distance matrix
 dist_1 <- y1_est$RDA1 - y1_est$y_est
 dist_2 <- y2_est$RDAD - y2_est$y_est
