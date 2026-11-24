@@ -261,21 +261,22 @@ Ypredict_lm<- data.frame(Y_final_est1,Y_final_est2,Y_final_est3) # un test pour 
    
 
 #Projection des valeurs réelles et estimées----
-fitted_values_predict <- data.frame(predict(RDA, x=env_observed, y=test_final_env, type="wa"))
-head(fitted_values_predict)
+
+fitted_values_proj <- data.frame(predict(RDA, x=test_final_env, y=test_final_fg, type="wa"))
+head(fitted_values_proj)
 head(test_final_fg)
 plot(RDA, display = c("species", "reg"))#inertie sur l'axe par variable Y : groupe fonctionnel
 plot(RDA, display = c("reg", "sp"))#biplot
 plot(RDA, display = "wa")
-points(fitted_values_predict[,1:2], col = "red", pch = 19)
+points(fitted_values_proj[,1:2], col = "red", pch = 19)
 points(Ypredict_lm[, 1:2], col = "blue", pch = 19)  
 
 #Evaluation criteria
 Eval<-data.frame(row.names = c("Axe1","Axe2","Axe3"))
 #RMSE
-Eval$RMSE<-c(sqrt(mean((fitted_values_predict$RDA1 - Ypredict_lm$Y_final_est1)^2)),
-             sqrt(mean((fitted_values_predict$RDA2 - Ypredict_lm$Y_final_est2)^2)),
-             sqrt(mean((fitted_values_predict$RDA3 - Ypredict_lm$Y_final_est3)^2)))
+Eval$RMSE<-c(sqrt(mean((fitted_values_proj$RDA1 - Ypredict_lm$Y_final_est1)^2)),
+             sqrt(mean((fitted_values_proj$RDA2 - Ypredict_lm$Y_final_est2)^2)),
+             sqrt(mean((fitted_values_proj$RDA3 - Ypredict_lm$Y_final_est3)^2)))
 
 
 
