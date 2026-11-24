@@ -198,7 +198,7 @@ for (i in 1:B){
   MSE3<- mean((y3_est$RDA3 - y3_est$y_est)^2)
 
   
-  # Enregistrement des coefficients et des MSE ----
+  ## Enregistrement des coefficients et des MSE ----
   
   ## Coefficients 
   
@@ -229,7 +229,15 @@ head(full_lm3)
 
 head(scores)
 
+# Calcul of RMSE ----
 
+RMSE1 <- sqrt(sum(scores$score1)/B)
+RMSE2 <- sqrt(sum(scores$score2)/B)
+RMSE3 <- sqrt(sum(scores$score3)/B)
+
+print(RMSE1)
+print(RMSE2)
+print(RMSE3)
 
 
 #EVALUATION FINALE  -----
