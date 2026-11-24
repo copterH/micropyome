@@ -24,11 +24,11 @@ set.seed(123)
 #IMPORTATION DES DONNEES----
 
 ##Functionnal groups----
-file_fg <- data.frame(read_csv("fg_observed_averyll.csv"))
+file_fg <- data.frame(read_csv("fg_observed_averyll.csv", show_col_types = FALSE))
 row.names(file_fg)<-file_fg[,1]#on renomme les indices par la première colonne
 
 ##Environmental parameters----
-file_env<-data.frame(read_csv("13_variables_averyll.csv"))
+file_env<-data.frame(read_csv("13_variables_averyll.csv", show_col_types = FALSE))
 row.names(file_env)<-file_env[,1]
 
 
@@ -96,24 +96,18 @@ RDA_coordinates<-data.frame(merge(RDA_coordinates,env_observed,by=0))%>% as.data
 
 #BOUCLE MONTE CARLO ----
 B <- 100
-# Initialisation score
-# score1 <- 100 #à voir si on garde cette valeur initiale?
-# score2 <- 100
-# score3 <- 100
 
-# Initialisation of lm_amelio
-# nul14 = rep(0,14)
-# lm_amelio <- data.frame("RDA1_coef" = nul14,
-#                         "RDA2_coef" = nul14,
-#                         "RDA3_coef" = nul14)
+# créer des dataframe qui enregistrent tous les lm
 
-les_lm <- data.frame(col.names=c("axe1", "axe2","axe3"))
+m <- matrix(ncol = 0, nrow = B)
+full_lm1 <- data.frame(m)
+full_lm2 <- data.frame(m)
+full_lm3 <- data.frame(m)
 
+# créer un dataframe qui enregistre les MSE de chaque modèle testé
 
-# créer une var qui enregistre tous les lm
-# créer une liste qui enregistre les MSE de chaque modèle testé
-
-scores <- data.frame(colnames=c("score1", "score2", "score3"))
+n <- matrix(ncol = 0, nrow = 3)
+scores <- data.frame(n)
 
 for (i in 1:B){
   
@@ -208,26 +202,32 @@ for (i in 1:B){
   
   ## Coefficients 
   
-  les_lm$axe1[i,] <- linear_model1$coefficients
-  les_lm$axe2[[i]] <- linear_model2$coefficients
-  les_lm$axe3[[i]] <- linear_model3$coefficients
+  full_lm1 <- rbind(full_lm1, linear_model1$coefficients)
+  full_lm2 <- rbind(full_lm2, linear_model1$coefficients)
+  full_lm3 <- rbind(full_lm3, linear_model1$coefficients)
   
   ## MSE
   
-  scores$score1[[i]] <- MSE1
-  scores$score2[[i]] <- MSE2
-  scores$score3[[i]] <- MSE3
+  scores <- rbind(scores, c(MSE1, MSE2, MSE3))
   
 }
 
 #End of loop
 
-print(list_lm)
-print(scores)
+colnames(full_lm1) <- c("pC", "cn", "pH", "NPP", "map", "mat", "forest", "conifer",
+                        "relEM", "P", "K", "Ca", "Mg")
+colnames(full_lm2) <- c("pC", "cn", "pH", "NPP", "map", "mat", "forest", "conifer",
+                        "relEM", "P", "K", "Ca", "Mg")
+colnames(full_lm3) <- c("pC", "cn", "pH", "NPP", "map", "mat", "forest", "conifer",
+                        "relEM", "P", "K", "Ca", "Mg")
+colnames(scores) <- c("score1", "score2", "score3")
 
 
+head(full_lm1)
+head(full_lm2)
+head(full_lm3)
 
-
+head(scores)
 
 
 
