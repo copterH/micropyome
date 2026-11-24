@@ -296,26 +296,35 @@ dist_3 <- y3_est$RDA3 - y3_est$y_est
 # r2_1 <- 1 - (score_new1^2)/ (mst (dist_1)) #TEST pour calcul du R²
 r2_1 <- RsquareAdj(y1_est$RDA1, y1_est$y_est, n=32)
 r2_2 <- RsquareAdj(y2_est$RDA2, y2_est$y_est, n = 32)
-r3_3 <- RsquareAdj(sssy3_est$RDA3, y3_est$y_est, n=32)
+r2_3 <- RsquareAdj(y3_est$RDA3, y3_est$y_est, n=32)
 
 # MC WITH ELASTICNET ----
-
-# créer des dataframe qui enregistrent tous les lm
-
-m <- matrix(ncol = 0, nrow = B)
-full_lm1 <- data.frame(m)
-full_lm2 <- data.frame(m)
-full_lm3 <- data.frame(m)
 
 # créer un dataframe qui enregistre les MSE de chaque modèle testé
 
 n <- matrix(ncol = 0, nrow = 3)
 scores <- data.frame(n)
 
+#Alphas initialisation for elastic net
+alphas <- seq(0, 1, by = 0.1)
+
+
+#Dataframe saving best hyperparameters
+df_hp1 <- data.frame(best_alpha = NA, best_lambda = NA)
+df_hp2 <- data.frame(best_alpha = NA, best_lambda = NA)
+df_hp3 <- data.frame(best_alpha = NA, best_lambda = NA)
+
+B<-1000
+
 for (i in 1:B){
   
   ## Initialisation ----
+  #For choosing best parameters later
+  cv_results1 <- data.frame(alpha = alphas, min_cvm = NA, lambda_min = NA)
+  cv_results2 <- data.frame(alpha = alphas, min_cvm = NA, lambda_min = NA)
+  cv_results3 <- data.frame(alpha = alphas, min_cvm = NA, lambda_min = NA)
   
+
   # création de deux groupes pour l'entrainement(train) et la validation croisée(val)
   
   train_fg <- RDA_coordinates %>% sample_frac(2/3) #on prend les coordonnees de 2/3 des data d'entrainement (96li)
@@ -324,10 +333,9 @@ for (i in 1:B){
   
   ## Search Grid over alpha -----
   for (j in seq_along(alphas)) {
-    
     #Linear model with Elastic net
     #Axe 1
-    cv_fit1 <- cv.glmnet(train_fg[ , 5:ncol(train_fg)], 
+    cv_fit1 <- cv.glmnet(as.matrix(train_fg[ , 5:ncol(train_fg)]), 
                         train_fg[ , "RDA1"], 
                         alpha = alphas[j], nfolds = 10)
     cv_results1$min_cvm[j] <- min(cv_fit1$cvm) #minimum cross validated error for each alpha
@@ -335,7 +343,7 @@ for (i in 1:B){
     
     
     #Axe 2
-    cv_fit2 <- cv.glmnet(train_fg[ , 5:ncol(train_fg)], 
+    cv_fit2 <- cv.glmnet(as.matrix(train_fg[ , 5:ncol(train_fg)]), 
                          train_fg[ , "RDA2"], 
                          alpha = alphas[j], nfolds = 10)
     cv_results2$min_cvm[j] <- min(cv_fit2$cvm) #minimum cross validated error for each alpha
@@ -343,100 +351,49 @@ for (i in 1:B){
 
     
     #Axe 3
-    cv_fit3 <- cv.glmnet(train_fg[ , 5:ncol(train_fg)], 
+    cv_fit3 <- cv.glmnet(as.matrix(train_fg[ , 5:ncol(train_fg)]), 
                          train_fg[ , "RDA3"], 
                          alpha = alphas[j], nfolds = 10)
     cv_results3$min_cvm[j] <- min(cv_fit3$cvm) #minimum cross validated error for each alpha
     cv_results3$lambda_min[j] <- cv_fit3$lambda.min
     
-    }
+  }
+  #Axe 1
+  best_idx1 <- which.min(cv_results1$min_cvm)
+  best_alpha1 <- cv_results1$alpha[best_idx1]
+  best_lambda1 <- cv_results1$lambda_min[best_idx1]
+  
+  df_hp1[i,"best_alpha"]<-best_alpha1
+  df_hp1[i,"best_lambda"]<-best_lambda1
   
   
+  #Axe 2
+  best_idx2 <- which.min(cv_results2$min_cvm)
+  best_alpha2 <- cv_results2$alpha[best_idx2]
+  best_lambda2 <- cv_results2$lambda_min[best_idx2]
   
-  ##Extraction des coefficients et calcul des Y^ ----
-  coef<-data.frame("RDA1_coef"=linear_model1$coefficients, 
-                   "RDA2_coef"=linear_model2$coefficients,
-                   "RDA3_coef"=linear_model3$coefficients) %>%
-    t() %>% as.data.frame()
-  
-  cols<-intersect(names(coef), names(val_fg)) #select all factors coefficients
-  
-  ###Y^  Axe 1 ----
-  y1_est<-val_fg %>% 
-    
-    #1. Multiplication of coefficient * values
-    mutate(
-      across( #across : apply function to multiple columns
-        all_of(cols), #were to apply it
-        ~ .x * as.numeric(coef[['RDA1_coef',cur_column()]]))) %>% #which function. Here multiply the column by the coefficient factor
-    
-    #2. Sum of coefficient and add intercept
-    mutate(y_est=rowSums(across(all_of(cols)))) %>%
-    mutate(y_est, y_est=y_est + as.numeric(coef[['RDA1_coef', '(Intercept)']])) %>%
-    
-    #3. Select to have only RDA1, y1_est
-    select(Row.names,RDA1,y_est)
+  df_hp2[i,"best_alpha"]<-best_alpha2
+  df_hp2[i,"best_lambda"]<-best_lambda2
   
   
-  ###Y^  Axe 2 ----
-  y2_est<-val_fg %>% 
-    
-    #1. Multiplication of coefficient * values
-    mutate(
-      across( #across : apply function to multiple columns
-        all_of(cols), #were to apply it
-        ~ .x * as.numeric(coef[['RDA2_coef',cur_column()]]))) %>% #which function. Here multiply the column by the coefficient factor
-    
-    #2. Sum of coefficient and add intercept
-    mutate(y_est=rowSums(across(all_of(cols)))) %>%
-    mutate(y_est, y_est=y_est + as.numeric(coef[['RDA2_coef', '(Intercept)']])) %>%
-    
-    #3. Select to have only RDA1, y1_est
-    select(Row.names,RDA2,y_est)
+  #Axe 3
+  best_idx3 <- which.min(cv_results3$min_cvm)
+  best_alpha3 <- cv_results3$alpha[best_idx3]
+  best_lambda3 <- cv_results3$lambda_min[best_idx3]
   
-  
-  ###Y^  Axe 3 ----
-  y3_est<-val_fg %>% 
-    
-    #1. Multiplication of coefficient * values
-    mutate(
-      across( #across : apply function to multiple columns
-        all_of(cols), #were to apply it
-        ~ .x * as.numeric(coef[['RDA3_coef',cur_column()]]))) %>% #which function. Here multiply the column by the coefficient factor
-    
-    #2. Sum of coefficient and add intercept
-    mutate(y_est=rowSums(across(all_of(cols)))) %>%
-    mutate(y_est, y_est=y_est + as.numeric(coef[['RDA3_coef', '(Intercept)']])) %>%
-    
-    #3. Select to have only RDA1, y1_est
-    select(Row.names,RDA3,y_est)
-  
-  
-  
-  ## Calcul de la distance (MSE) ----
-  
-  MSE1<- mean((y1_est$RDA1 - y1_est$y_est)^2)
-  MSE2<- mean((y2_est$RDA2 - y2_est$y_est)^2)
-  MSE3<- mean((y3_est$RDA3 - y3_est$y_est)^2)
-  
-  
-  ## Enregistrement des coefficients et des MSE ----
-  
-  ## Coefficients 
-  
-  full_lm1 <- rbind(full_lm1, linear_model1$coefficients)
-  full_lm2 <- rbind(full_lm2, linear_model2$coefficients)
-  full_lm3 <- rbind(full_lm3, linear_model3$coefficients)
-  
-  ## MSE
-  
-  scores <- rbind(scores, c(MSE1, MSE2, MSE3))
-  
-  
-  
+  df_hp3[i,"best_alpha"]<-best_alpha3
+  df_hp3[i,"best_lambda"]<-best_lambda3
 }
 
 #End of loop
+mean(df_hp1[,"best_alpha"])
+sd(df_hp1[,"best_alpha"])
+
+mean(df_hp2[,"best_alpha"])
+sd(df_hp2[,"best_alpha"])
+
+mean(df_hp3[,"best_alpha"])
+sd(df_hp3[,"best_alpha"])
 
 
 #Creation of the final model : Mean of all coefficient.
@@ -451,4 +408,40 @@ RMSE3 <- sqrt(sum(scores$score3)/B)
 print(RMSE1)
 print(RMSE2)
 print(RMSE3)
+
+
+
+## End Loop ----
+
+### Calcul of the mean alpha and lambda ----
+
+final_alpha1 <- sum(df_hp1$best_alpha)/B
+final_lambda1 <- sum(df_hp1$best_lambda)/B
+
+final_alpha2 <- sum(df_hp2$best_alpha)/B
+final_lambda2 <- sum(df_hp2$best_lambda)/B
+
+final_alpha3 <- sum(df_hp3$best_alpha)/B
+final_lambda3 <- sum(df_hp3$best_lambda)/B
+
+#### Return the best models ----
+
+# Axe 1
+EN_lm1 <- cv.glmnet(train_fg[,5:ncol(train_fg)],
+                    train_fg[,"RDA1"],
+                    alpha = final_alpha1, nfolds = 10)
+final_coefs1 <- coef(EN_lm1, s = "lambda.1se")
+
+# Axe 2
+EN_lm2 <- cv.glmnet(train_fg[,5:ncol(train_fg)],
+                    train_fg[,"RDA2"],
+                    alpha = final_alpha2, nfolds = 10)
+final_coefs2 <- coef(EN_lm2, s = "lambda.1se")
+
+# Axe 3
+EN_lm3 <- cv.glmnet(train_fg[,5:ncol(train_fg)],
+                    train_fg[,"RDA3"],
+                    alpha = final_alpha3, nfolds = 10)
+final_coefs3 <- coef(EN_lm3, s = "lambda.1se")
+>>>>>>> origin/main
 
