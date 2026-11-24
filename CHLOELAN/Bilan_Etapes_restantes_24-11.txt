@@ -1,0 +1,21 @@
+Restant MLB
+
+REDACTION:________________________________________________________ 
+
+	1. Presentation des donnees (Article, donnees, demarche expe pour les obtenir, utilite de rechercher sur le sujet, problematique de recherche, presentation de la rda, quel type de ML on veut faire (regression), pourquoi ML necessaire, expliquer qu'on a pris que Averill et pas neon (simplification au debut + problematique de mesures repetees au meme endroit pour neon, donc avec plus de contexte a gerer), que si on avait pris les 2 il aurait fallu verifier que les donnees n'etaient pas distinguable selon la provenance du jeu de donnees.
+
+	2. Explication des differentes et etapes du modele et des (futurs) choix de modeles complexifies
+
+	3. Interpretation biologique des Coeff en lien avec la RDA
+
+CODE:_____________________________________________________________
+
+	1. Calcul des incertitudes du modele Standard deviation over the folds (and over repetitions)/Confidence interval by bootstrap on the test set (diapo 16)
+
+	2. Calcul difference entre training et validation score (????) (diapo 17)
+
+	3. Complexification
+		A. Create Ridge, kNN
+		B. Cross validation on training set for hyperparameters
+		C. keep a separate test set, or use nested cross-validation: an outer loop estimates performance, an inner loop tunes the hyperparameters (diapo 12)
+
