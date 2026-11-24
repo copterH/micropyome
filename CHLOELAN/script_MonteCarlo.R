@@ -4,11 +4,16 @@ Machine Learning for Biology Project
 
 "
 
-
 #PREPARATION DE L'ESPACE DE TRAVAIL----
 
-library(tidyverse) #manipulation de données
-library(vegan) #RDA
+# Cleaning environment
+
+rm(list=ls())
+
+# Importing libraries
+
+library(tidyverse) # data manipulation
+library(vegan) # RDA
 library(Metrics)
 library(cv)
 library(ape)
@@ -19,11 +24,11 @@ set.seed(123)
 #IMPORTATION DES DONNEES----
 
 ##Functionnal groups----
-file_fg <- data.frame(read_csv("fg_observed_averyll.csv"))
+file_fg <- data.frame(read_csv("fg_observed_averyll.csv", show_col_types = FALSE))
 row.names(file_fg)<-file_fg[,1]#on renomme les indices par la première colonne
 
 ##Environmental parameters----
-file_env<-data.frame(read_csv("13_variables_averyll.csv"))
+file_env<-data.frame(read_csv("13_variables_averyll.csv", show_col_types = FALSE))
 row.names(file_env)<-file_env[,1]
 
 
@@ -79,7 +84,7 @@ plot(RDA, display = "wa")#points
 
 ##Merge avec les variables environementales----
 
-RDA_coordinates<-data.frame(merge(RDA_coordinates,env_observed,by=0))
+RDA_coordinates<-data.frame(merge(RDA_coordinates,env_observed,by=0))%>% as.data.frame()
 
 
 
@@ -91,16 +96,18 @@ RDA_coordinates<-data.frame(merge(RDA_coordinates,env_observed,by=0))
 
 #BOUCLE MONTE CARLO ----
 B <- 100
-# Initialisation score
-score1 <- 100 #à voir si on garde cette valeur initiale?
-score2 <- 100
-score3 <- 100
 
-# Initialisation of lm_amelio
-nul14 = rep(0,14)
-lm_amelio <- data.frame("RDA1_coef" = nul14,
-                        "RDA2_coef" = nul14,
-                        "RDA3_coef" = nul14)
+# créer des dataframe qui enregistrent tous les lm
+
+m <- matrix(ncol = 0, nrow = B)
+full_lm1 <- data.frame(m)
+full_lm2 <- data.frame(m)
+full_lm3 <- data.frame(m)
+
+# créer un dataframe qui enregistre les MSE de chaque modèle testé
+
+n <- matrix(ncol = 0, nrow = 3)
+scores <- data.frame(n)
 
 for (i in 1:B){
   
@@ -108,7 +115,7 @@ for (i in 1:B){
   
   # création de deux groupes pour l'entrainement(train) et la validation croisée(val)
   
-  train_fg<-RDA_coordinates %>% sample_frac(2/3) #on prend les coordonnees de 2/3 des data d'entrainement (96li)
+  train_fg <- RDA_coordinates %>% sample_frac(2/3) #on prend les coordonnees de 2/3 des data d'entrainement (96li)
   val_fg<-setdiff(RDA_coordinates,train_fg)#le 1/3 restant est utilise pour la validation(32li)
   
   
@@ -122,7 +129,7 @@ for (i in 1:B){
                        relEM +P + K + Ca + Mg, data=train_fg)
   #Axe 3
   linear_model3<-lm( RDA3 ~ pC + cn + pH + NPP + map + mat + forest + conifer +
-                       relEM +P + K + Ca + Mg, data=train_fg)
+                       relEM +P + K + Ca + Mg, data=train_fg) 
   
   ##Extraction des coefficients et calcul des Y^ ----
   coef<-data.frame("RDA1_coef"=linear_model1$coefficients, 
@@ -130,7 +137,7 @@ for (i in 1:B){
                    "RDA3_coef"=linear_model3$coefficients) %>%
     t() %>% as.data.frame()
   
-  cols<-intersect(names(coef), names(val_fg)) #select all factors coefficients 
+  cols<-intersect(names(coef), names(val_fg)) #select all factors coefficients
   
   ###Y^  Axe 1 ----
   y1_est<-val_fg %>% 
@@ -184,48 +191,49 @@ for (i in 1:B){
   
   
   
-  ##Calcul de la distance (RMSE) ----
+  ## Calcul de la distance (MSE) ----
   
-  #RMSE = Root mean square error
-  score_new1<-sqrt(mean((y1_est$RDA1 - y1_est$y_est)^2))# score 1 is lower 
-  score_new2<-sqrt(mean((y2_est$RDA2 - y2_est$y_est)^2))
-  score_new3<-sqrt(mean((y3_est$RDA3 - y3_est$y_est)^2)) #score 3 is higher
-  
+  MSE1<- mean((y1_est$RDA1 - y1_est$y_est)^2)
+  MSE2<- mean((y2_est$RDA2 - y2_est$y_est)^2)
+  MSE3<- mean((y3_est$RDA3 - y3_est$y_est)^2)
 
-  #Test meilleur score et enregistrement ----
   
-  coef <- coef %>% t() %>% as.data.frame()
+  # Enregistrement des coefficients et des MSE ----
   
-  if(score_new1<score1) {
-    lm_amelio$RDA1_coef <- coef$RDA1_coef
-    #Mise à jour du meilleur modèle
-    #matrice qui contient tous les coefficients des 3 LM, colonne 1 = LM1 etc.
-    score1 <- score_new1 #Mise à jour du meilleur score
-  }
+  ## Coefficients 
   
-  if(score_new2<score2) {
-    lm_amelio$RDA2_coef <- coef$RDA2_coef
-    #Mise à jour du meilleur modèle
-    #matrice qui contient tous les coefficients des 3 LM, colonne 1 = LM1 etc.
-    score2 <- score_new2 #Mise à jour du meilleur score
-  }
+  full_lm1 <- rbind(full_lm1, linear_model1$coefficients)
+  full_lm2 <- rbind(full_lm2, linear_model1$coefficients)
+  full_lm3 <- rbind(full_lm3, linear_model1$coefficients)
   
-  if(score_new3<score3) {
-    lm_amelio$RDA3_coef <- coef$RDA3_coef
-    #Mise à jour du meilleur modèle
-    #matrice qui contient tous les coefficients des 3 LM, colonne 1 = LM1 etc.
-    score3 <- score_new3 #Mise à jour du meilleur score
-  }
-  score <- data.frame("score_1" = score1,
-                      "score_2" = score2,
-                      "score_3" = score3)
+  ## MSE
+  
+  scores <- rbind(scores, c(MSE1, MSE2, MSE3))
+  
 }
-print(lm_amelio)
-print(score)
+
 #End of loop
+
+colnames(full_lm1) <- c("pC", "cn", "pH", "NPP", "map", "mat", "forest", "conifer",
+                        "relEM", "P", "K", "Ca", "Mg")
+colnames(full_lm2) <- c("pC", "cn", "pH", "NPP", "map", "mat", "forest", "conifer",
+                        "relEM", "P", "K", "Ca", "Mg")
+colnames(full_lm3) <- c("pC", "cn", "pH", "NPP", "map", "mat", "forest", "conifer",
+                        "relEM", "P", "K", "Ca", "Mg")
+colnames(scores) <- c("score1", "score2", "score3")
+
+
+head(full_lm1)
+head(full_lm2)
+head(full_lm3)
+
+head(scores)
+
+
 
 
 #EVALUATION FINALE  -----
+
 # predict (linear_model1, newdata = valid )#s$class
 #axe 1 
 Y_final_est1<-predict (linear_model1, newdata = test_final_env )
@@ -254,6 +262,9 @@ Eval<-data.frame(row.names = c("Axe1","Axe2","Axe3"))
 Eval$RMSE<-c(sqrt(mean((fitted_values_predict$RDA1 - Ypredict_lm$Y_final_est1)^2)),
              sqrt(mean((fitted_values_predict$RDA2 - Ypredict_lm$Y_final_est2)^2)),
              sqrt(mean((fitted_values_predict$RDA3 - Ypredict_lm$Y_final_est3)^2)))
+
+
+
 #MAE = Mean Absolute Error
 score_mae_1 <- mae(y1_est$RDA1, y1_est$y_est ) #score 1 is lower
 score_mae_2 <- mae(y2_est$RDA2, y2_est$y_est)
@@ -266,11 +277,11 @@ dist_2 <- y2_est$RDAD - y2_est$y_est
 dist_3 <- y3_est$RDA3 - y3_est$y_est
 #r2 = 1-(MSE/MST)
 
+
 # r2_1 <- 1 - (score_new1^2)/ (mst (dist_1)) #TEST pour calcul du R²
 r2_1 <- RsquareAdj(y1_est$RDA1, y1_est$y_est, n=32)
 r2_2 <- RsquareAdj(y2_est$RDA2, y2_est$y_est, n = 32)
-r3_3 <- RsquareAdj(y3_est$RDA3, y3_est$y_est, n=32)
-
+r3_3 <- RsquareAdj(sssy3_est$RDA3, y3_est$y_est, n=32)
 
 #test avorted pr ajouter nvelles donnees neon en plus de averyll
 # fitted_values_predict_2 <- predict (RDA, newdata = fg_champi_neon_RDA1, type = "response")
