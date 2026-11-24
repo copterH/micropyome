@@ -21,7 +21,7 @@ library(ape)
 set.seed(123)
 
 
-#DATA IMPORTATION ----
+#IMPORTATION DES DONNEES----
 
 ##Functionnal groups----
 file_fg <- data.frame(read_csv("fg_observed_averyll.csv", show_col_types = FALSE))
@@ -108,7 +108,6 @@ full_lm3 <- data.frame(m)
 
 n <- matrix(ncol = 0, nrow = 3)
 scores <- data.frame(n)
-
 
 for (i in 1:B){
   
@@ -223,7 +222,6 @@ colnames(full_lm2) <- c("pC", "cn", "pH", "NPP", "map", "mat", "forest", "conife
                         "relEM", "P", "K", "Ca", "Mg")
 colnames(full_lm3) <- c("pC", "cn", "pH", "NPP", "map", "mat", "forest", "conifer",
                         "relEM", "P", "K", "Ca", "Mg")
-
 colnames(scores) <- c("score1", "score2", "score3")
 
 
@@ -232,7 +230,6 @@ head(full_lm2)
 head(full_lm3)
 
 head(scores)
-
 
 
 #Creation of the final model : Mean of all coefficient.
@@ -246,33 +243,8 @@ RMSE3 <- sqrt(sum(scores$score3)/B)
 
 print(RMSE1)
 print(RMSE2)
-
 print(RMSE3)
-##  Compute MAE on the test set inside the training set ------
-val_fg #validation set inside training set
-### MAE 1 -----
-Y_valid_est1<-predict (linear_model1, newdata = val_fg )
-Y_valid_est1 #predicted data for validation set
-val_fg$RDA1 #observed values for validation set
-score_mae_1_valid_fc <- mae(val_fg$RDA1, Y_valid_est1 )
-score_mae_1_valid_man <- (1/(nrow(val_fg))) * sum(abs(val_fg$RDA1 - Y_valid_est1))
 
-
-score_mae_1_valid_fc == score_mae_1_valid_man #the values of MAE computed by the function or the manual formula are equals
-### MAE 2, 3 -----
-#we repeat the previous operation for the rda axes 2 and 3
-Y_valid_est2<-predict (linear_model2, newdata = val_fg )
-Y_valid_est3<-predict (linear_model3, newdata = val_fg )
-Y_valid_est2 #predicted data for validation set
-val_fg$RDA2  #observed values for validation set
-#axis RDA2 
-score_mae_2_valid_fc <- mae(val_fg$RDA2, Y_valid_est2 )
-score_mae_2_valid_man <- (1/(nrow(val_fg))) * sum(abs(val_fg$RDA2 - Y_valid_est2))
-#Axis RDA3
-score_mae_3_valid_fc <- mae(val_fg$RDA3, Y_valid_est3 )
-score_mae_3_valid_man <- (1/(nrow(val_fg))) * sum(abs(val_fg$RDA3 - Y_valid_est3))
-#print the MAE values for the 3 RDA axes of Validation Set
-score_mae_1_valid_fc ; score_mae_2_valid_fc ; score_mae_3_valid_fc
 
 #EVALUATION FINALE  -----
 
@@ -284,48 +256,36 @@ Y_final_est2<-predict (linear_model2, newdata = test_final_env )
 
 #axe 3
 Y_final_est3<-predict (linear_model3, newdata = test_final_env )
-#reunite the 3 axes for final test
 Ypredict_lm<- data.frame(Y_final_est1,Y_final_est2,Y_final_est3) # un test pour predict
 
    
 
 #Projection des valeurs réelles et estimées----
-fitted_values_predict <- data.frame(predict(RDA, x=env_observed, y=test_final_env, type="wa"))
-head(fitted_values_predict)
+
+fitted_values_proj <- data.frame(predict(RDA, x=test_final_env, y=test_final_fg, type="wa"))
+head(fitted_values_proj)
 head(test_final_fg)
 plot(RDA, display = c("species", "reg"))#inertie sur l'axe par variable Y : groupe fonctionnel
 plot(RDA, display = c("reg", "sp"))#biplot
 plot(RDA, display = "wa")
-points(fitted_values_predict[,1:2], col = "red", pch = 19)
+points(fitted_values_proj[,1:2], col = "red", pch = 19)
 points(Ypredict_lm[, 1:2], col = "blue", pch = 19)  
 
 #Evaluation criteria
 Eval<-data.frame(row.names = c("Axe1","Axe2","Axe3"))
 #RMSE
-Eval$RMSE<-c(sqrt(mean((fitted_values_predict$RDA1 - Ypredict_lm$Y_final_est1)^2)),
-             sqrt(mean((fitted_values_predict$RDA2 - Ypredict_lm$Y_final_est2)^2)),
-             sqrt(mean((fitted_values_predict$RDA3 - Ypredict_lm$Y_final_est3)^2)))
+Eval$RMSE<-c(sqrt(mean((fitted_values_proj$RDA1 - Ypredict_lm$Y_final_est1)^2)),
+             sqrt(mean((fitted_values_proj$RDA2 - Ypredict_lm$Y_final_est2)^2)),
+             sqrt(mean((fitted_values_proj$RDA3 - Ypredict_lm$Y_final_est3)^2)))
 
 
 
 #MAE = Mean Absolute Error
-
-fitted_values_predict$RDA1 # Observed values of axis RDA1, in the Final Validation set
-Ypredict_lm$Y_final_est1 # Predicted values of linear model 1, in the Final Validation set, only the values
-Y_final_est1 # Predicted values of linear model 1, in the Final Validation set, identifier of sample with values
-
-score_mae_1_final <- mae(fitted_values_predict$RDA1, Ypredict_lm$Y_final_est1) #
-score_mae_1_final_bis <- (1/(nrow(fitted_values_predict))) * sum(abs(fitted_values_predict$RDA1 - Ypredict_lm$Y_final_est1))
+score_mae_1 <- mae(y1_est$RDA1, y1_est$y_est ) #score 1 is lower
+score_mae_2 <- mae(y2_est$RDA2, y2_est$y_est)
+score_mae_3 <- mae (y3_est$RDA3, y3_est$y_est) #score 3 is higher
 
 
-score_mae_2_final <- mae(fitted_values_predict$RDA2, Ypredict_lm$Y_final_est2)#compute the MAE score using the function mae{Metrics}
-score_mae_2_final_bis <- (1/(nrow(fitted_values_predict))) * sum(abs(fitted_values_predict$RDA2 - Ypredict_lm$Y_final_est2))#compute the MAE score manually, using the formula 1/N * sum|y_est - y^_est|
-score_mae_3_final <- mae (fitted_values_predict$RDA3, Ypredict_lm$Y_final_est3) #score 3 is higher
-score_mae_3_final_bis <- (1/(nrow(fitted_values_predict))) * sum(abs(fitted_values_predict$RDA3 - Ypredict_lm$Y_final_est3))
-#print MAE values for 3 RDA axes in the Final Evaluation Set
-score_mae_1_final ; score_mae_2_final ; score_mae_3_final
-
-#> score_mae_1_valid_fc ; score_mae_2_valid_fc ; score_mae_3_valid_fc
 #distance matrix
 dist_1 <- y1_est$RDA1 - y1_est$y_est
 dist_2 <- y2_est$RDAD - y2_est$y_est
@@ -334,18 +294,9 @@ dist_3 <- y3_est$RDA3 - y3_est$y_est
 
 
 # r2_1 <- 1 - (score_new1^2)/ (mst (dist_1)) #TEST pour calcul du R²
-r2_1 <- RsquareAdj(y1_est$RDA1, y1_est$y_est, n=32) #r2 is lower  
+r2_1 <- RsquareAdj(y1_est$RDA1, y1_est$y_est, n=32)
 r2_2 <- RsquareAdj(y2_est$RDA2, y2_est$y_est, n = 32)
-r2_3 <- RsquareAdj(y3_est$RDA3, y3_est$y_est, n=32)
-
-#Compare  r² of  3 axes of the RDA
-sum(r2_1)#lower
-sum(r2_2)
-sum(r2_3)
-mean(r2_1)#lower 
-mean(r2_2)
-mean(r2_3)
-
+r3_3 <- RsquareAdj(sssy3_est$RDA3, y3_est$y_est, n=32)
 
 # MC WITH ELASTICNET ----
 
