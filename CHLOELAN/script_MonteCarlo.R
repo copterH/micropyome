@@ -302,6 +302,57 @@ r2_2 <- RsquareAdj(y2_est$RDA2, y2_est$y_est, n = 32)
 
 r2_3 <- RsquareAdj(y3_est$RDA3, y3_est$y_est, n=32)
 
+
+
+
 # MC WITH ELASTICNET ----
 
+
+## Initialisation ----
+
+B <- 100
+alphas <- seq(0, 1, by = 0.1)
+cv_results <- data.frame(alpha = alphas, min_cvm = NA, lambda_min = NA)
+
+df_hp1 <- data.frame(best_alpha = NA, best_lambda = NA)
+df_hp2 <- data.frame(best_alpha = NA, best_lambda = NA)
+df_hp3 <- data.frame(best_alpha = NA, best_lambda = NA)
+
+
+## Loop ----
+
+
+
+## End Loop ----
+
+### Calcul of the mean alpha and lambda ----
+
+final_alpha1 <- sum(df_hp1$best_alpha)/B
+final_lambda1 <- sum(df_hp1$best_lambda)/B
+
+final_alpha2 <- sum(df_hp2$best_alpha)/B
+final_lambda2 <- sum(df_hp2$best_lambda)/B
+
+final_alpha3 <- sum(df_hp3$best_alpha)/B
+final_lambda3 <- sum(df_hp3$best_lambda)/B
+
+#### Return the best models ----
+
+# Axe 1
+EN_lm1 <- cv.glmnet(train_fg[,5:ncol(train_fg)],
+                    train_fg[,"RDA1"],
+                    alpha = final_alpha1, nfolds = 10)
+final_coefs1 <- coef(EN_lm1, s = "lambda.1se")
+
+# Axe 2
+EN_lm2 <- cv.glmnet(train_fg[,5:ncol(train_fg)],
+                    train_fg[,"RDA2"],
+                    alpha = final_alpha2, nfolds = 10)
+final_coefs2 <- coef(EN_lm2, s = "lambda.1se")
+
+# Axe 3
+EN_lm3 <- cv.glmnet(train_fg[,5:ncol(train_fg)],
+                    train_fg[,"RDA3"],
+                    alpha = final_alpha3, nfolds = 10)
+final_coefs3 <- coef(EN_lm3, s = "lambda.1se")
 
