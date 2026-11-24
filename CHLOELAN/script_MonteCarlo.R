@@ -259,6 +259,7 @@ score_mae_1 <- mae(y1_est$RDA1, y1_est$y_est ) #score 1 is lower
 score_mae_2 <- mae(y2_est$RDA2, y2_est$y_est)
 score_mae_3 <- mae (y3_est$RDA3, y3_est$y_est) #score 3 is higher
 
+
 #distance matrix
 dist_1 <- y1_est$RDA1 - y1_est$y_est
 dist_2 <- y2_est$RDAD - y2_est$y_est
@@ -268,7 +269,7 @@ dist_3 <- y3_est$RDA3 - y3_est$y_est
 # r2_1 <- 1 - (score_new1^2)/ (mst (dist_1)) #TEST pour calcul du R²
 r2_1 <- RsquareAdj(y1_est$RDA1, y1_est$y_est, n=32)
 r2_2 <- RsquareAdj(y2_est$RDA2, y2_est$y_est, n = 32)
-r3_3 <- RsquareAdj(y3_est$RDA3, y2_est$y_est, n=32)
+r3_3 <- RsquareAdj(y3_est$RDA3, y3_est$y_est, n=32)
 
 
 #test avorted pr ajouter nvelles donnees neon en plus de averyll
