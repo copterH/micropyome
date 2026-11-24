@@ -203,13 +203,15 @@ for (i in 1:B){
   ## Coefficients 
   
   full_lm1 <- rbind(full_lm1, linear_model1$coefficients)
-  full_lm2 <- rbind(full_lm2, linear_model1$coefficients)
-  full_lm3 <- rbind(full_lm3, linear_model1$coefficients)
+  full_lm2 <- rbind(full_lm2, linear_model2$coefficients)
+  full_lm3 <- rbind(full_lm3, linear_model3$coefficients)
   
   ## MSE
   
   scores <- rbind(scores, c(MSE1, MSE2, MSE3))
+ 
   
+   
 }
 
 #End of loop
@@ -228,6 +230,10 @@ head(full_lm2)
 head(full_lm3)
 
 head(scores)
+
+
+#Creation of the final model : Mean of all coefficient.
+
 
 # Calcul of RMSE ----
 
@@ -291,19 +297,5 @@ r2_1 <- RsquareAdj(y1_est$RDA1, y1_est$y_est, n=32)
 r2_2 <- RsquareAdj(y2_est$RDA2, y2_est$y_est, n = 32)
 r3_3 <- RsquareAdj(sssy3_est$RDA3, y3_est$y_est, n=32)
 
-#test avorted pr ajouter nvelles donnees neon en plus de averyll
-# fitted_values_predict_2 <- predict (RDA, newdata = fg_champi_neon_RDA1, type = "response")
-# 
-# plot(fitted_values_predict_2)
-# neon_13var
-# fc_grp_neon
-
-#truc qui fonctionne pas on verra apres
-summary(cv(m.auto, k = "loo") ) # default method = "hatvalues"
-#> n-Fold Cross Validation
-#> method: hatvalues
-#> criterion: mse
-#> cross-validation criterion = 19.248
-summary(cv(m.auto, k = "loo", method = "naive"))         
-##comparer cette prediction avec les obs reelles ----
+# MC WITH ELASTICNET ----
 
