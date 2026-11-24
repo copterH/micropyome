@@ -299,3 +299,5 @@ r3_3 <- RsquareAdj(sssy3_est$RDA3, y3_est$y_est, n=32)
 
 # MC WITH ELASTICNET ----
 
+
+
