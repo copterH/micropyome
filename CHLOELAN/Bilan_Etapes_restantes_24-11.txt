@@ -12,7 +12,7 @@ CODE:_____________________________________________________________
 
 	1. Calcul des incertitudes du modele Standard deviation over the folds (and over repetitions)/Confidence interval by bootstrap on the test set (diapo 16)
 
-	2. Calcul difference entre training et validation score (????) (diapo 17)
+
 
 	3. Complexification
 		A. Create Ridge, kNN
