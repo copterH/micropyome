@@ -51,6 +51,7 @@ test_final_fg <- select(test_final_fg,-1)
 fg_observed <- select(fg_observed,-1)
 file_env<-select(file_env,-1)
 
+
 ##Sélection du sous ensemble pour les paramètres environnementaux----
 test_final_env<- file_env %>% filter(row.names(file_env) %in% sample_final)
 env_observed<-setdiff(file_env,test_final_env)
@@ -229,27 +230,29 @@ score_mae_2_valid_man <- (1/(nrow(val_fg))) * sum(abs(val_fg$RDA2 - Y_valid_est2
 score_mae_3_valid_fc <- mae(val_fg$RDA3, Y_valid_est3 )
 score_mae_3_valid_man <- (1/(nrow(val_fg))) * sum(abs(val_fg$RDA3 - Y_valid_est3))
 #print the MAE values for the 3 RDA axes of Validation Set
-score_mae_1_valid_fc ; score_mae_2_valid_fc ; score_mae_3_valid_fc
+score_mae_1_valid_fc ; score_mae_2_valid_fc ; score_mae_3_valid_fc #using function mae{Metrics}
+score_mae_1_valid_man ; score_mae_2_valid_man ; score_mae_3_valid_man #manually writing the formula : check is ok
 
 
 
 #EVALUATION FINALE  -----
 # predict (linear_model1, newdata = valid )#s$class #old version of model prediction
 #axe 1 of the RDA
-test_final_env #data obs of final validation dataset
+head(test_final_env) #environmental data obs  of final validation dataset : used to predict
+head(test_final_fg) #functional group data obs of final validation dataset : not to be touched, only to compare
 full_lm1#dataframe containing the values coefficient of all the iteration of the linear model in the loop
 dim(full_lm1)# it contain 100 lines, corresponding to 100 iterations in MonteCarlo loop
 
 
 Y_final_est1_mean <- rapply (full_lm1, mean) #compute the mean of the lines for each column #correspond to the coefficient of the "best" model
 
-linear_model1_mean <-  lm( RDA1 ~ pC + cn + pH + NPP + map + mat + forest + conifer + relEM + P + K + Ca + Mg, data = Y_final_est1_mean)
+# linear_model1_mean <-  lm( RDA1 ~ pC + cn + pH + NPP + map + mat + forest + conifer + relEM + P + K + Ca + Mg, data = Y_final_est1_mean) #trying method for applying the model
 
 
 Y_final_est1<- ( test_final_env * Y_final_est1_mean ) #from the coeff of the model, computes the predictions for validation dataset
 
 score_mae_1_final_fc <- mae(test_final_env, Y_final_est1 )
-score_mae_1_final_man <- (1/(nrow(val_fg))) * sum(abs(val_fg$RDA1 - Y_valid_est1))
+score_mae_1_final_man <- (1/(nrow(test_final_env))) * sum(abs(test_final_env - Y_valid_est1))
 
 
 
