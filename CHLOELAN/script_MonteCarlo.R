@@ -36,8 +36,6 @@ row.names(file_env)<-file_env[,1]
 
 
 
-
-
 #SELECTION D'UN SOUS ENSEMBLE POUR L'EVALUATION FINALE----
 test_final_fg<-file_fg %>% sample_frac(.25)#on prend 25% du jeu de donnees pr le test final
 sample_final<-test_final_fg[,1]#nom de l'echantillon = col1 du tab
@@ -52,6 +50,7 @@ nrow(test_final_fg)+nrow(fg_observed) == nrow(file_fg)#somme des TRAIN+TEST = nb
 test_final_fg <- select(test_final_fg,-1)
 fg_observed <- select(fg_observed,-1)
 file_env<-select(file_env,-1)
+
 
 ##Sélection du sous ensemble pour les paramètres environnementaux----
 test_final_env<- file_env %>% filter(row.names(file_env) %in% sample_final)
@@ -88,6 +87,8 @@ plot(RDA, display = "wa")#points
 RDA_coordinates<-data.frame(merge(RDA_coordinates,env_observed,by=0))%>% as.data.frame()
 
 
+#Récupération des noms des variables
+cols<-intersect(names(RDA_coordinates), names(env_observed)) #select all factors coefficients
 
 
 
@@ -133,71 +134,25 @@ for (i in 1:B){
   linear_model3<-lm( RDA3 ~ pC + cn + pH + NPP + map + mat + forest + conifer +
                        relEM +P + K + Ca + Mg, data=train_fg) 
   
-  ##Extraction des coefficients et calcul des Y^ ----
-  coef<-data.frame("RDA1_coef"=linear_model1$coefficients, 
-                   "RDA2_coef"=linear_model2$coefficients,
-                   "RDA3_coef"=linear_model3$coefficients) %>%
-    t() %>% as.data.frame()
-  
-  cols<-intersect(names(coef), names(val_fg)) #select all factors coefficients
+  ## Validation ----
   
   ###Y^  Axe 1 ----
-  y1_est<-val_fg %>% 
-    
-    #1. Multiplication of coefficient * values
-    mutate(
-      across( #across : apply function to multiple columns
-        all_of(cols), #were to apply it
-        ~ .x * as.numeric(coef[['RDA1_coef',cur_column()]]))) %>% #which function. Here multiply the column by the coefficient factor
-    
-    #2. Sum of coefficient and add intercept
-    mutate(y_est=rowSums(across(all_of(cols)))) %>%
-    mutate(y_est, y_est=y_est + as.numeric(coef[['RDA1_coef', '(Intercept)']])) %>%
-    
-    #3. Select to have only RDA1, y1_est
-    select(Row.names,RDA1,y_est)
-  
+  y1_est<-predict (linear_model1, newdata = val_fg)
   
   ###Y^  Axe 2 ----
-  y2_est<-val_fg %>% 
-    
-    #1. Multiplication of coefficient * values
-    mutate(
-      across( #across : apply function to multiple columns
-        all_of(cols), #were to apply it
-        ~ .x * as.numeric(coef[['RDA2_coef',cur_column()]]))) %>% #which function. Here multiply the column by the coefficient factor
-    
-    #2. Sum of coefficient and add intercept
-    mutate(y_est=rowSums(across(all_of(cols)))) %>%
-    mutate(y_est, y_est=y_est + as.numeric(coef[['RDA2_coef', '(Intercept)']])) %>%
-    
-    #3. Select to have only RDA1, y1_est
-    select(Row.names,RDA2,y_est)
+  y2_est<-predict (linear_model2, newdata = val_fg)
   
   
   ###Y^  Axe 3 ----
-  y3_est<-val_fg %>% 
-    
-    #1. Multiplication of coefficient * values
-    mutate(
-      across( #across : apply function to multiple columns
-        all_of(cols), #were to apply it
-        ~ .x * as.numeric(coef[['RDA3_coef',cur_column()]]))) %>% #which function. Here multiply the column by the coefficient factor
-    
-    #2. Sum of coefficient and add intercept
-    mutate(y_est=rowSums(across(all_of(cols)))) %>%
-    mutate(y_est, y_est=y_est + as.numeric(coef[['RDA3_coef', '(Intercept)']])) %>%
-    
-    #3. Select to have only RDA1, y1_est
-    select(Row.names,RDA3,y_est)
+  y3_est<-predict (linear_model3, newdata = val_fg)
   
   
   
   ## Calcul de la distance (MSE) ----
   
-  MSE1<- mean((y1_est$RDA1 - y1_est$y_est)^2)
-  MSE2<- mean((y2_est$RDA2 - y2_est$y_est)^2)
-  MSE3<- mean((y3_est$RDA3 - y3_est$y_est)^2)
+  MSE1<- mean((val_fg$RDA1 - y1_est)^2)
+  MSE2<- mean((val_fg$RDA2 - y2_est)^2)
+  MSE3<- mean((val_fg$RDA3 - y3_est)^2)
 
   
   ## Enregistrement des coefficients et des MSE ----
@@ -262,6 +217,7 @@ score_mae_1_valid_man <- (1/(nrow(val_fg))) * sum(abs(val_fg$RDA1 - Y_valid_est1
 
 
 score_mae_1_valid_fc == score_mae_1_valid_man #the values of MAE computed by the function or the manual formula are equals
+
 ### MAE 2, 3 -----
 #we repeat the previous operation for the rda axes 2 and 3
 Y_valid_est2<-predict (linear_model2, newdata = val_fg )
@@ -275,27 +231,29 @@ score_mae_2_valid_man <- (1/(nrow(val_fg))) * sum(abs(val_fg$RDA2 - Y_valid_est2
 score_mae_3_valid_fc <- mae(val_fg$RDA3, Y_valid_est3 )
 score_mae_3_valid_man <- (1/(nrow(val_fg))) * sum(abs(val_fg$RDA3 - Y_valid_est3))
 #print the MAE values for the 3 RDA axes of Validation Set
-score_mae_1_valid_fc ; score_mae_2_valid_fc ; score_mae_3_valid_fc
+score_mae_1_valid_fc ; score_mae_2_valid_fc ; score_mae_3_valid_fc #using function mae{Metrics}
+score_mae_1_valid_man ; score_mae_2_valid_man ; score_mae_3_valid_man #manually writing the formula : check is ok
 
 
 
 ## EVALUATION FINALE  -----
 # predict (linear_model1, newdata = valid )#s$class #old version of model prediction
 #axe 1 of the RDA
-test_final_env #data obs of final validation dataset
+head(test_final_env) #environmental data obs  of final validation dataset : used to predict
+head(test_final_fg) #functional group data obs of final validation dataset : not to be touched, only to compare
 full_lm1#dataframe containing the values coefficient of all the iteration of the linear model in the loop
 dim(full_lm1)# it contain 100 lines, corresponding to 100 iterations in MonteCarlo loop
 
 
 Y_final_est1_mean <- rapply (full_lm1, mean) #compute the mean of the lines for each column #correspond to the coefficient of the "best" model
 
-linear_model1_mean <-  lm( RDA1 ~ pC + cn + pH + NPP + map + mat + forest + conifer + relEM + P + K + Ca + Mg, data = Y_final_est1_mean)
+# linear_model1_mean <-  lm( RDA1 ~ pC + cn + pH + NPP + map + mat + forest + conifer + relEM + P + K + Ca + Mg, data = Y_final_est1_mean) #trying method for applying the model
 
 
 Y_final_est1<- ( test_final_env * Y_final_est1_mean ) #from the coeff of the model, computes the predictions for validation dataset
 
 score_mae_1_final_fc <- mae(test_final_env, Y_final_est1 )
-score_mae_1_final_man <- (1/(nrow(val_fg))) * sum(abs(val_fg$RDA1 - Y_valid_est1))
+score_mae_1_final_man <- (1/(nrow(test_final_env))) * sum(abs(test_final_env - Y_valid_est1))
 
 
 
