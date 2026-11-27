@@ -14,8 +14,13 @@ rm(list=ls())
 
 library(tidyverse) # data manipulation
 library(vegan) # RDA
+<<<<<<< HEAD
 library(Metrics)
 library(cv) #cross validation
+=======
+library(Metrics) #rmse, mae
+library(cv)
+>>>>>>> origin/main
 library(ape)
 library(glmnet) #linear model
 
@@ -61,33 +66,33 @@ env_observed<-setdiff(file_env,test_final_env)
 
 
 
-# RDA ----
+# RDA : redondancy analysis----
 RDA <- rda(fg_observed ~ pC + cn + pH + NPP + map + mat + forest + conifer + relEM +P + K + Ca + Mg, 
                          data = env_observed)
-##Récupération des axes de la RDA----
+## Taking the RDA axes ----
 
 test<-RDA$CCA$u[,1:3] #extrait les coordonnees de la RDA
 
-#display = sites ou  species (functionnal groups)
+#display = sites or  species (functionnal groups)
 #choices= axis
 #scaling ="none", "sites", "species", or "symmetric", which correspond to the values 0, 1, 2, and 3 respectively
 RDA_coordinates<-scores(RDA, display = "sites", choices = 1:3, scaling = 2)#sp?
 RDA_coordinates
 
 
-scores(RDA, display = "sites", choices = 1:3, scaling = "sp")#retrouve la meme chose que ligne precedente : score sur l'axe par sample
-scores(RDA, display = "species", choices = 1:3, scaling = 3)#inertie sur l'axe par variable Y : groupe fonctionnel
-plot(RDA, display = c("species", "reg"))#inertie sur l'axe par variable Y : groupe fonctionnel
-plot(RDA, display = c("reg", "sp"))#biplot
-plot(RDA, display = "wa")#points
-# plot(RDA, display = "cn")#var X
+scores(RDA, display = "sites", choices = 1:3, scaling = "sp") # find same result as the previous line : score on the sample axis : 
+scores(RDA, display = "species", choices = 1:3, scaling = 3) # inertia on the axis by variable Y : functionnal group 
+plot(RDA, display = c("species", "reg"))
+plot(RDA, display = c("reg", "sp")) # biplot
+plot(RDA, display = "wa") # points
+# plot(RDA, display = "cn") # var X
 
-##Merge avec les variables environementales----
+##Merging with environemental variables ----
 
 RDA_coordinates<-data.frame(merge(RDA_coordinates,env_observed,by=0))%>% as.data.frame()
 
 
-#Récupération des noms des variables
+# Taking the variables names 
 cols<-intersect(names(RDA_coordinates), names(env_observed)) #select all factors coefficients
 
 
@@ -108,10 +113,11 @@ full_lm1 <- data.frame(m)
 full_lm2 <- data.frame(m)
 full_lm3 <- data.frame(m)
 
-# créer un dataframe qui enregistre les MSE de chaque modèle testé
+# create a dataframe registering les MSE for each tested model
 
-n <- matrix(ncol = 0, nrow = 3)
+n <- matrix(ncol=0, nrow=3)
 scores <- data.frame(n)
+LM_MAE <- data.frame(n)
 
 
 ## ____Loop____ ----
@@ -121,13 +127,13 @@ for (i in 1:B){
   print(paste0(i,"/100"))
   ## Initialisation ----
   
-  # création de deux groupes pour l'entrainement(train) et la validation croisée(val)
+  # creation of 2 groups for trainig(train) and cross validation(val)
   
-  train_fg <- RDA_coordinates %>% sample_frac(2/3) #on prend les coordonnees de 2/3 des data d'entrainement (96li)
-  val_fg<-setdiff(RDA_coordinates,train_fg)#le 1/3 restant est utilise pour la validation(32li)
+  train_fg <- RDA_coordinates %>% sample_frac(2/3) #we take coordinates of  2/3 of training data (96li)
+  val_fg<-setdiff(RDA_coordinates,train_fg)# 1/3 remaining is used for validation(32li)
   
   
-  ## Modèle linéaire -----
+  ## Linear model -----
   
   #Axe 1
   linear_model1<-lm( RDA1 ~ pC + cn + pH + NPP + map + mat + forest + conifer +
@@ -152,14 +158,14 @@ for (i in 1:B){
   
   
   
-  ## Calcul de la distance (MSE) ----
+  ## Distance computation (MSE) ----
   
   MSE1<- mean((val_fg$RDA1 - y1_est)^2)
   MSE2<- mean((val_fg$RDA2 - y2_est)^2)
   MSE3<- mean((val_fg$RDA3 - y3_est)^2)
 
   
-  ## Enregistrement des coefficients et des MSE ----
+  ## Storing coefficients and MSE ----
   
   ## Coefficients 
   
@@ -171,20 +177,26 @@ for (i in 1:B){
   
   scores <- rbind(scores, c(MSE1, MSE2, MSE3))
  
+  ## MAE
+  
+  LM_MAE <- rbind(LM_MAE, c(mae(val_fg$RDA1, y1_est),
+                            mae(val_fg$RDA2, y2_est),
+                            mae(val_fg$RDA3, y3_est)))
   
    
 }
 
 ## ____End of loop____ ----
 
-#Proposition: la liste "cols" correspond exactement à ce vecteur
+#Proposition: list "cols" corresponds exactly at this vector 
 colnames(full_lm1) <- c("Intercept", "pC", "cn", "pH", "NPP", "map", "mat", "forest", "conifer",
                         "relEM", "P", "K", "Ca", "Mg")
 colnames(full_lm2) <- c("Intercept", "pC", "cn", "pH", "NPP", "map", "mat", "forest", "conifer",
                         "relEM", "P", "K", "Ca", "Mg")
 colnames(full_lm3) <- c("Intercept", "pC", "cn", "pH", "NPP", "map", "mat", "forest", "conifer",
                         "relEM", "P", "K", "Ca", "Mg")
-colnames(scores) <- c("score1", "score2", "score3")
+colnames(scores) <- c("MSE1", "MSE2", "MSE3")
+colnames(LM_MAE) <- c("MAE1", "MAE2", "MAE3")
 
 
 head(full_lm1)
@@ -193,77 +205,32 @@ head(full_lm3)
 
 head(scores)
 
-# MODELE LINEAIRE MOYEN FINAL ----
+# FINAL MEAN LINEAIRE MODEL   ----
 LM1_final<- data.frame('LM1'=rapply (full_lm1, mean)) %>% t()
 LM2_final<- data.frame('LM2'=rapply (full_lm2, mean)) %>% t()
 LM3_final<- data.frame('LM3'=rapply (full_lm3, mean)) %>% t()
 
 #Creation of the final model : Mean of all coefficient.
 
-
-## RMSE ----
-
-RMSE1 <- sqrt(sum(scores$score1)/B)
-RMSE2 <- sqrt(sum(scores$score2)/B)
-RMSE3 <- sqrt(sum(scores$score3)/B)
-
-print(RMSE1)
-print(RMSE2)
-print(RMSE3)
 #Evaluation criteria
 LM_scores_train<-data.frame(row.names = c("Axe1","Axe2","Axe3"))
 #RMSE
-LM_scores_train$RMSE<-c(sqrt(mean(scores$score1)),
-                      sqrt(mean(scores$score2)),
-                      sqrt(mean(scores$score3)))
+LM_scores_train$RMSE<-c(sqrt(mean(scores$MSE1)),
+                        sqrt(mean(scores$MSE2)),
+                        sqrt(mean(scores$MSE3)))
 
 
 
 ## MAE = Mean Absolute Error ----
 #NE MARCHE PAS ENCORE MAIS C'EST LA BONNE LIGNE DE CODE
-# LM_scores_train$MAE <- c(mae(fitted_values_proj$RDA1, Ypredict_lm$Y_final_est1),
-#                        mae(fitted_values_proj$RDA2, Ypredict_lm$Y_final_est2),
-#                        mae(fitted_values_proj$RDA3, Ypredict_lm$Y_final_est3))
-
-
-###VALID in training set (???)
-
-
-##  Compute MAE on the test set inside the training set ----
-
-val_fg #validation set inside training set
-### MAE 1 -----
-Y_valid_est1<-predict (linear_model1, newdata = val_fg)
-Y_valid_est1 #predicted data for validation set
-val_fg$RDA1 #observed values for validation set
-score_mae_1_valid_fc <- mae(val_fg$RDA1, Y_valid_est1 )
-score_mae_1_valid_man <- (1/(nrow(val_fg))) * sum(abs(val_fg$RDA1 - Y_valid_est1))
-
-
-score_mae_1_valid_fc == score_mae_1_valid_man #the values of MAE computed by the function or the manual formula are equals
-
-### MAE 2, 3 -----
-#we repeat the previous operation for the rda axes 2 and 3
-Y_valid_est2<-predict (linear_model2, newdata = val_fg )
-Y_valid_est3<-predict (linear_model3, newdata = val_fg )
-Y_valid_est2 #predicted data for validation set
-val_fg$RDA2  #observed values for validation set
-#axis RDA2 
-score_mae_2_valid_fc <- mae(val_fg$RDA2, Y_valid_est2 )
-score_mae_2_valid_man <- (1/(nrow(val_fg))) * sum(abs(val_fg$RDA2 - Y_valid_est2))
-#Axis RDA3
-score_mae_3_valid_fc <- mae(val_fg$RDA3, Y_valid_est3 )
-score_mae_3_valid_man <- (1/(nrow(val_fg))) * sum(abs(val_fg$RDA3 - Y_valid_est3))
-#print the MAE values for the 3 RDA axes of Validation Set
-score_mae_1_valid_fc ; score_mae_2_valid_fc ; score_mae_3_valid_fc #using function mae{Metrics}
-score_mae_1_valid_man ; score_mae_2_valid_man ; score_mae_3_valid_man #manually writing the formula : check is ok
-
-
+LM_scores_train$MAE <- c(mean(LM_MAE$MAE1),
+                         mean(LM_MAE$MAE2),
+                         mean(LM_MAE$MAE3))
 
 
 # FINAL EVALUATION ----
 
-## Calcul des valeurs estimées Y^ des données finales (25% des données complètes) ----
+##Computing the estimated values Y^ of final data (25% of whole dataset) ----
 
 ### LINEAR MODEL ----
 
@@ -325,12 +292,12 @@ Ypredict_lm <- data.frame('Y_final_est1'=FINAL_lm1_y_predict$y_est,
 
 
 
-## Projection des valeurs réelles et estimées----
+## Projection of real and estimated values ----
 
 fitted_values_proj <- data.frame(predict(RDA, x=test_final_env, y=test_final_fg, type="wa"))
 head(fitted_values_proj)
 head(test_final_fg)
-plot(RDA, display = c("species", "reg"))#inertie sur l'axe par variable Y : groupe fonctionnel
+plot(RDA, display = c("species", "reg"))# inbertia on the axis by variable Y :  fonctionnal group
 plot(RDA, display = c("reg", "sp"))#biplot
 plot(RDA, display = "wa")
 points(fitted_values_proj[,1:2], col = "red", pch = 19)
@@ -383,10 +350,10 @@ for (i in 1:B){
   cv_results3 <- data.frame(alpha = alphas, min_cvm = NA, lambda_min = NA)
   
 
-  # création de deux groupes pour l'entrainement(train) et la validation croisée(val)
+  # création of 2 groups for training(train) et la validation croisée(val)
   
-  train_fg <- RDA_coordinates %>% sample_frac(2/3) #on prend les coordonnees de 2/3 des data d'entrainement (96li)
-  val_fg<-setdiff(RDA_coordinates,train_fg)#le 1/3 restant est utilise pour la validation(32li)
+  train_fg <- RDA_coordinates %>% sample_frac(2/3) # we take coordonate of  2/3 of training data (96li)
+  val_fg<-setdiff(RDA_coordinates,train_fg)# 1/3 remaining is used for validation( 32li)
   
   ## Search Grid over alpha -----
   for (j in seq_along(alphas)) {
