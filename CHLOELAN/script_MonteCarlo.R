@@ -35,8 +35,6 @@ row.names(file_env)<-file_env[,1]
 
 
 
-
-
 #SELECTION D'UN SOUS ENSEMBLE POUR L'EVALUATION FINALE----
 test_final_fg<-file_fg %>% sample_frac(.25)#on prend 25% du jeu de donnees pr le test final
 sample_final<-test_final_fg[,1]#nom de l'echantillon = col1 du tab
@@ -87,6 +85,8 @@ plot(RDA, display = "wa")#points
 RDA_coordinates<-data.frame(merge(RDA_coordinates,env_observed,by=0))%>% as.data.frame()
 
 
+#Récupération des noms des variables
+cols<-intersect(names(RDA_coordinates), names(env_observed)) #select all factors coefficients
 
 
 
@@ -132,71 +132,25 @@ for (i in 1:B){
   linear_model3<-lm( RDA3 ~ pC + cn + pH + NPP + map + mat + forest + conifer +
                        relEM +P + K + Ca + Mg, data=train_fg) 
   
-  ##Extraction des coefficients et calcul des Y^ ----
-  coef<-data.frame("RDA1_coef"=linear_model1$coefficients, 
-                   "RDA2_coef"=linear_model2$coefficients,
-                   "RDA3_coef"=linear_model3$coefficients) %>%
-    t() %>% as.data.frame()
-  
-  cols<-intersect(names(coef), names(val_fg)) #select all factors coefficients
+  ## Validation ----
   
   ###Y^  Axe 1 ----
-  y1_est<-val_fg %>% 
-    
-    #1. Multiplication of coefficient * values
-    mutate(
-      across( #across : apply function to multiple columns
-        all_of(cols), #were to apply it
-        ~ .x * as.numeric(coef[['RDA1_coef',cur_column()]]))) %>% #which function. Here multiply the column by the coefficient factor
-    
-    #2. Sum of coefficient and add intercept
-    mutate(y_est=rowSums(across(all_of(cols)))) %>%
-    mutate(y_est, y_est=y_est + as.numeric(coef[['RDA1_coef', '(Intercept)']])) %>%
-    
-    #3. Select to have only RDA1, y1_est
-    select(Row.names,RDA1,y_est)
-  
+  y1_est<-predict (linear_model1, newdata = val_fg)
   
   ###Y^  Axe 2 ----
-  y2_est<-val_fg %>% 
-    
-    #1. Multiplication of coefficient * values
-    mutate(
-      across( #across : apply function to multiple columns
-        all_of(cols), #were to apply it
-        ~ .x * as.numeric(coef[['RDA2_coef',cur_column()]]))) %>% #which function. Here multiply the column by the coefficient factor
-    
-    #2. Sum of coefficient and add intercept
-    mutate(y_est=rowSums(across(all_of(cols)))) %>%
-    mutate(y_est, y_est=y_est + as.numeric(coef[['RDA2_coef', '(Intercept)']])) %>%
-    
-    #3. Select to have only RDA1, y1_est
-    select(Row.names,RDA2,y_est)
+  y2_est<-predict (linear_model2, newdata = val_fg)
   
   
   ###Y^  Axe 3 ----
-  y3_est<-val_fg %>% 
-    
-    #1. Multiplication of coefficient * values
-    mutate(
-      across( #across : apply function to multiple columns
-        all_of(cols), #were to apply it
-        ~ .x * as.numeric(coef[['RDA3_coef',cur_column()]]))) %>% #which function. Here multiply the column by the coefficient factor
-    
-    #2. Sum of coefficient and add intercept
-    mutate(y_est=rowSums(across(all_of(cols)))) %>%
-    mutate(y_est, y_est=y_est + as.numeric(coef[['RDA3_coef', '(Intercept)']])) %>%
-    
-    #3. Select to have only RDA1, y1_est
-    select(Row.names,RDA3,y_est)
+  y3_est<-predict (linear_model3, newdata = val_fg)
   
   
   
   ## Calcul de la distance (MSE) ----
   
-  MSE1<- mean((y1_est$RDA1 - y1_est$y_est)^2)
-  MSE2<- mean((y2_est$RDA2 - y2_est$y_est)^2)
-  MSE3<- mean((y3_est$RDA3 - y3_est$y_est)^2)
+  MSE1<- mean((val_fg$RDA1 - y1_est)^2)
+  MSE2<- mean((val_fg$RDA2 - y2_est)^2)
+  MSE3<- mean((val_fg$RDA3 - y3_est)^2)
 
   
   ## Enregistrement des coefficients et des MSE ----
@@ -260,6 +214,7 @@ score_mae_1_valid_man <- (1/(nrow(val_fg))) * sum(abs(val_fg$RDA1 - Y_valid_est1
 
 
 score_mae_1_valid_fc == score_mae_1_valid_man #the values of MAE computed by the function or the manual formula are equals
+
 ### MAE 2, 3 -----
 #we repeat the previous operation for the rda axes 2 and 3
 Y_valid_est2<-predict (linear_model2, newdata = val_fg )
