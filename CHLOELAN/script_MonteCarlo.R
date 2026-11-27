@@ -254,7 +254,7 @@ print(RMSE3)
 ##  Compute MAE on the test set inside the training set ------
 val_fg #validation set inside training set
 ### MAE 1 -----
-Y_valid_est1<-predict (linear_model1, newdata = val_fg$RDA1 )
+Y_valid_est1<-predict (linear_model1, newdata = val_fg)
 Y_valid_est1 #predicted data for validation set
 val_fg$RDA1 #observed values for validation set
 score_mae_1_valid_fc <- mae(val_fg$RDA1, Y_valid_est1 )
@@ -355,9 +355,9 @@ dist_3 <- y3_est$RDA3 - y3_est$y_est
 
 
 # r2_1 <- 1 - (score_new1^2)/ (mst (dist_1)) #TEST pour calcul du R²
-r2_1 <- RsquareAdj(y1_est$RDA1, y1_est$y_est, n=32) #r2 is lower  
+r2_1 <- RsquareAdj(y1_est$RDA1, y1_est$y_est, n = 32) #r2 is lower  
 r2_2 <- RsquareAdj(y2_est$RDA2, y2_est$y_est, n = 32)
-r2_3 <- RsquareAdj(y3_est$RDA3, y3_est$y_est, n=32)
+r2_3 <- RsquareAdj(y3_est$RDA3, y3_est$y_est, n = 32)
 
 
 
@@ -370,6 +370,11 @@ sum(r2_3)
 mean(r2_1)#lower 
 mean(r2_2)
 mean(r2_3)
+
+## SAVING SCORES IN DATAFRAME ----
+
+MC_score_train <- data.frame(row.names = c("Axe1","Axe2","Axe3"))
+
 
 
 
@@ -576,3 +581,14 @@ EN_scores_train$RMSE<-c(sqrt(mean((EN_y1_est_train$RDA1 - EN_y1_est_train$y_est)
 EN_scores_train$MAE<-c(mae(EN_y1_est_train$RDA1,EN_y1_est_train$y_est),
                        mae(EN_y2_est_train$RDA2, EN_y2_est_train$y_est),
                        mae(EN_y3_est_train$RDA3, EN_y3_est_train$y_est))
+
+
+
+
+# COMPARING MC AND EN ----
+
+
+
+
+
+
