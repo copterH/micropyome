@@ -110,8 +110,9 @@ full_lm3 <- data.frame(m)
 
 # créer un dataframe qui enregistre les MSE de chaque modèle testé
 
-n <- matrix(ncol = 0, nrow = 3)
+n <- matrix(ncol=0, nrow=3)
 scores <- data.frame(n)
+LM_MAE <- data.frame(n)
 
 
 ## ____Loop____ ----
@@ -171,6 +172,11 @@ for (i in 1:B){
   
   scores <- rbind(scores, c(MSE1, MSE2, MSE3))
  
+  ## MAE
+  
+  LM_MAE <- rbind(LM_MAE, c(mae(val_fg$RDA1, y1_est),
+                            mae(val_fg$RDA2, y2_est),
+                            mae(val_fg$RDA3, y3_est)))
   
    
 }
@@ -184,7 +190,8 @@ colnames(full_lm2) <- c("Intercept", "pC", "cn", "pH", "NPP", "map", "mat", "for
                         "relEM", "P", "K", "Ca", "Mg")
 colnames(full_lm3) <- c("Intercept", "pC", "cn", "pH", "NPP", "map", "mat", "forest", "conifer",
                         "relEM", "P", "K", "Ca", "Mg")
-colnames(scores) <- c("score1", "score2", "score3")
+colnames(scores) <- c("MSE1", "MSE2", "MSE3")
+colnames(LM_MAE) <- c("MAE1", "MAE2", "MAE3")
 
 
 head(full_lm1)
@@ -200,65 +207,20 @@ LM3_final<- data.frame('LM3'=rapply (full_lm3, mean)) %>% t()
 
 #Creation of the final model : Mean of all coefficient.
 
-
-## RMSE ----
-
-RMSE1 <- sqrt(sum(scores$score1)/B)
-RMSE2 <- sqrt(sum(scores$score2)/B)
-RMSE3 <- sqrt(sum(scores$score3)/B)
-
-print(RMSE1)
-print(RMSE2)
-print(RMSE3)
 #Evaluation criteria
 LM_scores_train<-data.frame(row.names = c("Axe1","Axe2","Axe3"))
 #RMSE
-LM_scores_train$RMSE<-c(sqrt(mean(scores$score1)),
-                      sqrt(mean(scores$score2)),
-                      sqrt(mean(scores$score3)))
+LM_scores_train$RMSE<-c(sqrt(mean(scores$MSE1)),
+                        sqrt(mean(scores$MSE2)),
+                        sqrt(mean(scores$MSE3)))
 
 
 
 ## MAE = Mean Absolute Error ----
 #NE MARCHE PAS ENCORE MAIS C'EST LA BONNE LIGNE DE CODE
-# LM_scores_train$MAE <- c(mae(fitted_values_proj$RDA1, Ypredict_lm$Y_final_est1),
-#                        mae(fitted_values_proj$RDA2, Ypredict_lm$Y_final_est2),
-#                        mae(fitted_values_proj$RDA3, Ypredict_lm$Y_final_est3))
-
-
-###VALID in training set (???)
-
-
-##  Compute MAE on the test set inside the training set ----
-
-val_fg #validation set inside training set
-### MAE 1 -----
-Y_valid_est1<-predict (linear_model1, newdata = val_fg)
-Y_valid_est1 #predicted data for validation set
-val_fg$RDA1 #observed values for validation set
-score_mae_1_valid_fc <- mae(val_fg$RDA1, Y_valid_est1 )
-score_mae_1_valid_man <- (1/(nrow(val_fg))) * sum(abs(val_fg$RDA1 - Y_valid_est1))
-
-
-score_mae_1_valid_fc == score_mae_1_valid_man #the values of MAE computed by the function or the manual formula are equals
-
-### MAE 2, 3 -----
-#we repeat the previous operation for the rda axes 2 and 3
-Y_valid_est2<-predict (linear_model2, newdata = val_fg )
-Y_valid_est3<-predict (linear_model3, newdata = val_fg )
-Y_valid_est2 #predicted data for validation set
-val_fg$RDA2  #observed values for validation set
-#axis RDA2 
-score_mae_2_valid_fc <- mae(val_fg$RDA2, Y_valid_est2 )
-score_mae_2_valid_man <- (1/(nrow(val_fg))) * sum(abs(val_fg$RDA2 - Y_valid_est2))
-#Axis RDA3
-score_mae_3_valid_fc <- mae(val_fg$RDA3, Y_valid_est3 )
-score_mae_3_valid_man <- (1/(nrow(val_fg))) * sum(abs(val_fg$RDA3 - Y_valid_est3))
-#print the MAE values for the 3 RDA axes of Validation Set
-score_mae_1_valid_fc ; score_mae_2_valid_fc ; score_mae_3_valid_fc #using function mae{Metrics}
-score_mae_1_valid_man ; score_mae_2_valid_man ; score_mae_3_valid_man #manually writing the formula : check is ok
-
-
+LM_scores_train$MAE <- c(mean(LM_MAE$MAE1),
+                         mean(LM_MAE$MAE2),
+                         mean(LM_MAE$MAE3))
 
 
 # FINAL EVALUATION ----
