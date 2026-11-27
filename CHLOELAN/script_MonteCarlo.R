@@ -61,7 +61,7 @@ env_observed<-setdiff(file_env,test_final_env)
 
 
 
-#RDA----
+# RDA ----
 RDA <- rda(fg_observed ~ pC + cn + pH + NPP + map + mat + forest + conifer + relEM +P + K + Ca + Mg, 
                          data = env_observed)
 ##Récupération des axes de la RDA----
@@ -96,10 +96,12 @@ cols<-intersect(names(RDA_coordinates), names(env_observed)) #select all factors
 
 
 
-#BOUCLE MONTE CARLO ----
-B <- 100
+# MONTE CARLO ----
 
-# créer des dataframe qui enregistrent tous les lm
+## Initialisation ----
+B <- 100 # Number of iterations for the loop
+
+# empty dataframe for saving all the lm inside the loop
 
 m <- matrix(ncol = 0, nrow = B)
 full_lm1 <- data.frame(m)
@@ -110,6 +112,9 @@ full_lm3 <- data.frame(m)
 
 n <- matrix(ncol = 0, nrow = 3)
 scores <- data.frame(n)
+
+
+## ____Loop____ ----
 
 for (i in 1:B){
   
@@ -171,7 +176,8 @@ for (i in 1:B){
    
 }
 
-#End of loop
+## ____End of loop____ ----
+
 #Proposition: la liste "cols" correspond exactement à ce vecteur
 colnames(full_lm1) <- c("Intercept", "pC", "cn", "pH", "NPP", "map", "mat", "forest", "conifer",
                         "relEM", "P", "K", "Ca", "Mg")
