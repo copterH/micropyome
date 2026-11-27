@@ -249,20 +249,9 @@ score_mae_1_valid_man ; score_mae_2_valid_man ; score_mae_3_valid_man #manually 
 
 # FINAL EVALUATION ----
 
-# predict (linear_model1, newdata = valid )#s$class #old version of model prediction
-#axe 1 of the RDA
-head(test_final_env) #environmental data obs  of final validation dataset : used to predict
-head(test_final_fg) #functional group data obs of final validation dataset : not to be touched, only to compare
-full_lm1#dataframe containing the values coefficient of all the iteration of the linear model in the loop
-dim(full_lm1)# it contain 100 lines, corresponding to 100 iterations in MonteCarlo loop
-
-
-
 ## Calcul des valeurs estimées Y^ des données finales (25% des données complètes) ----
 
-
 ### LINEAR MODEL ----
-
 
 ####Y^  Axe 1 ----
 
@@ -301,7 +290,7 @@ FINAL_lm2_y_predict<- test_final_env %>%
 
 ####Y^  Axe 3 ----
 
-FINAL_lm2_y_predict<- test_final_env %>% 
+FINAL_lm3_y_predict<- test_final_env %>% 
   
   #1. Multiplication of coefficient * values
   mutate(
@@ -315,6 +304,12 @@ FINAL_lm2_y_predict<- test_final_env %>%
   
   #3. Select to have only y2_est
   select(y_est)
+
+Ypredict_lm <- data.frame('Y_final_est1'=FINAL_lm1_y_predict$y_est, 
+                          'Y_final_est2'=FINAL_lm2_y_predict$y_est,
+                          'Y_final_est3'=FINAL_lm3_y_predict$y_est, row.names = row.names(FINAL_lm1_y_predict))
+
+
 
 ## Projection des valeurs réelles et estimées----
 
@@ -338,28 +333,9 @@ Eval$RMSE<-c(sqrt(mean((fitted_values_proj$RDA1 - Ypredict_lm$Y_final_est1)^2)),
 
 
 ## MAE = Mean Absolute Error ----
-
-fitted_values_proj$RDA1 # Observed values of axis RDA1, in the Final Validation set
-Ypredict_lm$Y_final_est1 # Predicted values of linear model 1, in the Final Validation set, only the values
-Y_final_est1 # Predicted values of linear model 1, in the Final Validation set, identifier of sample with values
-
-score_mae_1_final <- mae(fitted_values_proj$RDA1, Ypredict_lm$Y_final_est1) #
-score_mae_1_final_bis <- (1/(nrow(fitted_values_proj))) * sum(abs(fitted_values_proj$RDA1 - Ypredict_lm$Y_final_est1))
-
-
-score_mae_2_final <- mae(fitted_values_proj$RDA2, Ypredict_lm$Y_final_est2)#compute the MAE score using the function mae{Metrics}
-score_mae_2_final_bis <- (1/(nrow(fitted_values_proj))) * sum(abs(fitted_values_proj$RDA2 - Ypredict_lm$Y_final_est2))#compute the MAE score manually, using the formula 1/N * sum|y_est - y^_est|
-score_mae_3_final <- mae (fitted_values_proj$RDA3, Ypredict_lm$Y_final_est3) #score 3 is higher
-score_mae_3_final_bis <- (1/(nrow(fitted_values_proj))) * sum(abs(fitted_values_proj$RDA3 - Ypredict_lm$Y_final_est3))
-#print MAE values for 3 RDA axes in the Final Evaluation Set
-score_mae_1_final ; score_mae_2_final ; score_mae_3_final
-
-#> score_mae_1_valid_fc ; score_mae_2_valid_fc ; score_mae_3_valid_fc
-#distance matrix
-dist_1 <- y1_est$RDA1 - y1_est$y_est
-dist_2 <- y2_est$RDAD - y2_est$y_est
-dist_3 <- y3_est$RDA3 - y3_est$y_est
-#r2 = 1-(MSE/MST)
+Eval$MAE <- c(mae(fitted_values_proj$RDA1, Ypredict_lm$Y_final_est1),
+              mae(fitted_values_proj$RDA2, Ypredict_lm$Y_final_est2),
+              mae(fitted_values_proj$RDA3, Ypredict_lm$Y_final_est3))
 
 
 # r2_1 <- 1 - (score_new1^2)/ (mst (dist_1)) #TEST pour calcul du R²
