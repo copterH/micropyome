@@ -61,7 +61,7 @@ env_observed<-setdiff(file_env,test_final_env)
 
 
 
-#RDA----
+# RDA ----
 RDA <- rda(fg_observed ~ pC + cn + pH + NPP + map + mat + forest + conifer + relEM +P + K + Ca + Mg, 
                          data = env_observed)
 ##Récupération des axes de la RDA----
@@ -96,10 +96,12 @@ cols<-intersect(names(RDA_coordinates), names(env_observed)) #select all factors
 
 
 
-#BOUCLE MONTE CARLO ----
-B <- 100
+# MONTE CARLO ----
 
-# créer des dataframe qui enregistrent tous les lm
+## Initialisation ----
+B <- 100 # Number of iterations for the loop
+
+# empty dataframe for saving all the lm inside the loop
 
 m <- matrix(ncol = 0, nrow = B)
 full_lm1 <- data.frame(m)
@@ -110,6 +112,9 @@ full_lm3 <- data.frame(m)
 
 n <- matrix(ncol = 0, nrow = 3)
 scores <- data.frame(n)
+
+
+## ____Loop____ ----
 
 for (i in 1:B){
   
@@ -170,7 +175,8 @@ for (i in 1:B){
    
 }
 
-#End of loop
+## ____End of loop____ ----
+
 #Proposition: la liste "cols" correspond exactement à ce vecteur
 colnames(full_lm1) <- c("Intercept", "pC", "cn", "pH", "NPP", "map", "mat", "forest", "conifer",
                         "relEM", "P", "K", "Ca", "Mg")
@@ -195,7 +201,7 @@ LM3_final<- data.frame('LM3'=rapply (full_lm3, mean)) %>% t()
 #Creation of the final model : Mean of all coefficient.
 
 
-# Calcul of RMSE ----
+## Calcul of RMSE ----
 
 RMSE1 <- sqrt(sum(scores$score1)/B)
 RMSE2 <- sqrt(sum(scores$score2)/B)
@@ -206,10 +212,11 @@ print(RMSE2)
 print(RMSE3)
 
 
-###VALID in training set 
+###VALID in training set ???
 
 
-##  Compute MAE on the test set inside the training set ------
+##  Compute MAE on the test set inside the training set ----
+
 val_fg #validation set inside training set
 ### MAE 1 -----
 Y_valid_est1<-predict (linear_model1, newdata = val_fg)
@@ -239,7 +246,16 @@ score_mae_1_valid_man ; score_mae_2_valid_man ; score_mae_3_valid_man #manually 
 
 
 
-#EVALUATION FINALE  ----- 
+
+# FINAL EVALUATION ----
+
+# predict (linear_model1, newdata = valid )#s$class #old version of model prediction
+#axe 1 of the RDA
+head(test_final_env) #environmental data obs  of final validation dataset : used to predict
+head(test_final_fg) #functional group data obs of final validation dataset : not to be touched, only to compare
+full_lm1#dataframe containing the values coefficient of all the iteration of the linear model in the loop
+dim(full_lm1)# it contain 100 lines, corresponding to 100 iterations in MonteCarlo loop
+
 
 
 ## Calcul des valeurs estimées Y^ des données finales (25% des données complètes) ----
@@ -387,7 +403,7 @@ df_hp1 <- data.frame(best_alpha = NA, best_lambda = NA)
 df_hp2 <- data.frame(best_alpha = NA, best_lambda = NA)
 df_hp3 <- data.frame(best_alpha = NA, best_lambda = NA)
 
-B<-100
+B<-10
 
 for (i in 1:B){
   print(paste0(i,"/100"))
@@ -526,8 +542,6 @@ EN_y1_est_train<- RDA_coordinates %>%
   select(Row.names,RDA1,y_est)
 
 
-
-
 ###Y^  Axe 2 ----
 EN_y2_est_train<- RDA_coordinates %>% 
   
@@ -562,24 +576,108 @@ EN_y3_est_train<- RDA_coordinates %>%
   select(Row.names,RDA3,y_est)
 
 
-###RMSE ----
+### scores train ----
 
-EN_scores_train<-data.frame(row.names = c("Axe1","Axe2","Axe3"))
+EN_scores_train <- data.frame(row.names = c("Axe1","Axe2","Axe3"))
 
-EN_scores_train$RMSE<-c(sqrt(mean((EN_y1_est_train$RDA1 - EN_y1_est_train$y_est)^2)),
+EN_scores_train$RMSE <- c(sqrt(mean((EN_y1_est_train$RDA1 - EN_y1_est_train$y_est)^2)),
                         sqrt(mean((EN_y2_est_train$RDA2 - EN_y2_est_train$y_est)^2)),
                         sqrt(mean((EN_y3_est_train$RDA3 - EN_y3_est_train$y_est)^2)))
 
-EN_scores_train$MAE<-c(mae(EN_y1_est_train$RDA1,EN_y1_est_train$y_est),
+EN_scores_train$MAE <- c(mae(EN_y1_est_train$RDA1,EN_y1_est_train$y_est),
                        mae(EN_y2_est_train$RDA2, EN_y2_est_train$y_est),
                        mae(EN_y3_est_train$RDA3, EN_y3_est_train$y_est))
+
+EN_scores_train$r2 <- c(mean(RsquareAdj(EN_y1_est_train$RDA1, EN_y1_est_train$y_est, n = 32)),
+                        mean(RsquareAdj(EN_y2_est_train$RDA2, EN_y2_est_train$y_est, n = 32)),
+                        mean(RsquareAdj(EN_y3_est_train$RDA3, EN_y3_est_train$y_est, n = 32))
+                        )
+
+
+
+## FINAL EVALUATION OF EN ----
+
+### Calculation of Y^ eval ----
+
+#### Y^  Axe 1 ----
+EN_y1_est_eval<- RDA_coordinates %>% 
+  
+  #1. Multiplication of coefficient * values
+  mutate(
+    across( #across : apply function to multiple columns
+      all_of(cols), #were to apply it
+      ~ .x * as.numeric(final_coefs1[cur_column(),]))) %>% #which function. Here multiply the column by the coefficient factor
+  
+  #2. Sum of coefficient and add intercept
+  mutate(y_est=rowSums(across(all_of(cols)))) %>%
+  mutate(y_est, y_est=y_est + as.numeric(final_coefs1['(Intercept)', ])) %>%
+  
+  #3. Select to have only RDA1, y1_est
+  select(Row.names,RDA1,y_est)
+
+
+#### Y^  Axe 2 ----
+EN_y2_est_eval<- RDA_coordinates %>% 
+  
+  #1. Multiplication of coefficient * values
+  mutate(
+    across( #across : apply function to multiple columns
+      all_of(cols), #were to apply it
+      ~ .x * as.numeric(final_coefs2[cur_column(),]))) %>% #which function. Here multiply the column by the coefficient factor
+  
+  #2. Sum of coefficient and add intercept
+  mutate(y_est=rowSums(across(all_of(cols)))) %>%
+  mutate(y_est, y_est=y_est + as.numeric(final_coefs2['(Intercept)', ])) %>%
+  
+  #3. Select to have only RDA2, y2_est
+  select(Row.names,RDA2,y_est)
+
+
+#### Y^  Axe 3 ----
+EN_y3_est_eval<- test_final_env %>% 
+  
+  #1. Multiplication of coefficient * values
+  mutate(
+    across( #across : apply function to multiple columns
+      all_of(cols), #were to apply it
+      ~ .x * as.numeric(final_coefs3[cur_column(),]))) %>% #which function. Here multiply the column by the coefficient factor
+  
+  #2. Sum of coefficient and add intercept
+  mutate(y_est=rowSums(across(all_of(cols)))) %>%
+  mutate(y_est, y_est=y_est + as.numeric(final_coefs3['(Intercept)', ])) %>%
+  
+  #3. Select to have only RDA3, y3_est
+  select(Row.names,RDA3,y_est)
+
+
+
+## Calculation of scores ----
+
+EN_scores_val <- data.frame(row.names = c("Axe1","Axe2","Axe3"))
+
+EN_scores_val$RMSE <- c(sqrt(mean((EN_y1_est_train$RDA1 - EN_y1_est_train$y_est)^2)),
+                          sqrt(mean((EN_y2_est_train$RDA2 - EN_y2_est_train$y_est)^2)),
+                          sqrt(mean((EN_y3_est_train$RDA3 - EN_y3_est_train$y_est)^2)))
+
+EN_scores_val$MAE <- c(mae(EN_y1_est_train$RDA1,EN_y1_est_train$y_est),
+                         mae(EN_y2_est_train$RDA2, EN_y2_est_train$y_est),
+                         mae(EN_y3_est_train$RDA3, EN_y3_est_train$y_est))
+
+EN_scores_val$r2 <- c(mean(RsquareAdj(EN_y1_est_train$RDA1, EN_y1_est_train$y_est, n = 32)),
+                        mean(RsquareAdj(EN_y2_est_train$RDA2, EN_y2_est_train$y_est, n = 32)),
+                        mean(RsquareAdj(EN_y3_est_train$RDA3, EN_y3_est_train$y_est, n = 32))
+)
 
 
 
 
 # COMPARING MC AND EN ----
 
-MC_sc
+MC_scores_val
+
+EN_scores_val
+
+
 
 
 
