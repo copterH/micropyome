@@ -217,11 +217,11 @@ for (i in 1:B){
 
 #End of loop
 #Proposition: la liste "cols" correspond exactement à ce vecteur
-colnames(full_lm1) <- c("pC", "cn", "pH", "NPP", "map", "mat", "forest", "conifer",
+colnames(full_lm1) <- c("Intercept", "pC", "cn", "pH", "NPP", "map", "mat", "forest", "conifer",
                         "relEM", "P", "K", "Ca", "Mg")
-colnames(full_lm2) <- c("pC", "cn", "pH", "NPP", "map", "mat", "forest", "conifer",
+colnames(full_lm2) <- c("Intercept", "pC", "cn", "pH", "NPP", "map", "mat", "forest", "conifer",
                         "relEM", "P", "K", "Ca", "Mg")
-colnames(full_lm3) <- c("pC", "cn", "pH", "NPP", "map", "mat", "forest", "conifer",
+colnames(full_lm3) <- c("Intercept", "pC", "cn", "pH", "NPP", "map", "mat", "forest", "conifer",
                         "relEM", "P", "K", "Ca", "Mg")
 colnames(scores) <- c("score1", "score2", "score3")
 
@@ -252,7 +252,7 @@ print(RMSE3)
 ##  Compute MAE on the test set inside the training set ------
 val_fg #validation set inside training set
 ### MAE 1 -----
-Y_valid_est1<-predict (linear_model1, newdata = val_fg )
+Y_valid_est1<-predict (linear_model1, newdata = val_fg$RDA1 )
 Y_valid_est1 #predicted data for validation set
 val_fg$RDA1 #observed values for validation set
 score_mae_1_valid_fc <- mae(val_fg$RDA1, Y_valid_est1 )
@@ -278,10 +278,25 @@ score_mae_1_valid_fc ; score_mae_2_valid_fc ; score_mae_3_valid_fc
 
 
 #EVALUATION FINALE  -----
+# predict (linear_model1, newdata = valid )#s$class #old version of model prediction
+#axe 1 of the RDA
+test_final_env #data obs of final validation dataset
+full_lm1#dataframe containing the values coefficient of all the iteration of the linear model in the loop
+dim(full_lm1)# it contain 100 lines, corresponding to 100 iterations in MonteCarlo loop
 
-# predict (linear_model1, newdata = valid )#s$class
-#axe 1 
-Y_final_est1<-predict (linear_model1, newdata = test_final_env )
+
+Y_final_est1_mean <- rapply (full_lm1, mean) #compute the mean of the lines for each column #correspond to the coefficient of the "best" model
+
+linear_model1_mean <-  lm( RDA1 ~ pC + cn + pH + NPP + map + mat + forest + conifer + relEM + P + K + Ca + Mg, data = Y_final_est1_mean)
+
+
+Y_final_est1<- ( test_final_env * Y_final_est1_mean ) #from the coeff of the model, computes the predictions for validation dataset
+
+score_mae_1_final_fc <- mae(test_final_env, Y_final_est1 )
+score_mae_1_final_man <- (1/(nrow(val_fg))) * sum(abs(val_fg$RDA1 - Y_valid_est1))
+
+
+
 #axe 2
 Y_final_est2<-predict (linear_model2, newdata = test_final_env )
 
