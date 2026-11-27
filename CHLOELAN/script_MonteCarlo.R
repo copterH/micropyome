@@ -14,7 +14,7 @@ rm(list=ls())
 
 library(tidyverse) # data manipulation
 library(vegan) # RDA
-library(Metrics)
+library(Metrics) #rmse, mae
 library(cv)
 library(ape)
 library(glmnet)
@@ -61,33 +61,33 @@ env_observed<-setdiff(file_env,test_final_env)
 
 
 
-# RDA ----
+# RDA : redondancy analysis----
 RDA <- rda(fg_observed ~ pC + cn + pH + NPP + map + mat + forest + conifer + relEM +P + K + Ca + Mg, 
                          data = env_observed)
-##Récupération des axes de la RDA----
+## Taking the RDA axes ----
 
 test<-RDA$CCA$u[,1:3] #extrait les coordonnees de la RDA
 
-#display = sites ou  species (functionnal groups)
+#display = sites or  species (functionnal groups)
 #choices= axis
 #scaling ="none", "sites", "species", or "symmetric", which correspond to the values 0, 1, 2, and 3 respectively
 RDA_coordinates<-scores(RDA, display = "sites", choices = 1:3, scaling = 2)#sp?
 RDA_coordinates
 
 
-scores(RDA, display = "sites", choices = 1:3, scaling = "sp")#retrouve la meme chose que ligne precedente : score sur l'axe par sample
-scores(RDA, display = "species", choices = 1:3, scaling = 3)#inertie sur l'axe par variable Y : groupe fonctionnel
-plot(RDA, display = c("species", "reg"))#inertie sur l'axe par variable Y : groupe fonctionnel
-plot(RDA, display = c("reg", "sp"))#biplot
-plot(RDA, display = "wa")#points
-# plot(RDA, display = "cn")#var X
+scores(RDA, display = "sites", choices = 1:3, scaling = "sp") # find same result as the previous line : score on the sample axis : 
+scores(RDA, display = "species", choices = 1:3, scaling = 3) # inertia on the axis by variable Y : functionnal group 
+plot(RDA, display = c("species", "reg"))
+plot(RDA, display = c("reg", "sp")) # biplot
+plot(RDA, display = "wa") # points
+# plot(RDA, display = "cn") # var X
 
-##Merge avec les variables environementales----
+##Merging with environemental variables ----
 
 RDA_coordinates<-data.frame(merge(RDA_coordinates,env_observed,by=0))%>% as.data.frame()
 
 
-#Récupération des noms des variables
+# Taking the variables names 
 cols<-intersect(names(RDA_coordinates), names(env_observed)) #select all factors coefficients
 
 
@@ -108,7 +108,7 @@ full_lm1 <- data.frame(m)
 full_lm2 <- data.frame(m)
 full_lm3 <- data.frame(m)
 
-# créer un dataframe qui enregistre les MSE de chaque modèle testé
+# create a dataframe registering les MSE for each tested model
 
 n <- matrix(ncol=0, nrow=3)
 scores <- data.frame(n)
@@ -122,13 +122,13 @@ for (i in 1:B){
   print(paste0(i,"/100"))
   ## Initialisation ----
   
-  # création de deux groupes pour l'entrainement(train) et la validation croisée(val)
+  # creation of 2 groups for trainig(train) and cross validation(val)
   
-  train_fg <- RDA_coordinates %>% sample_frac(2/3) #on prend les coordonnees de 2/3 des data d'entrainement (96li)
-  val_fg<-setdiff(RDA_coordinates,train_fg)#le 1/3 restant est utilise pour la validation(32li)
+  train_fg <- RDA_coordinates %>% sample_frac(2/3) #we take coordinates of  2/3 of training data (96li)
+  val_fg<-setdiff(RDA_coordinates,train_fg)# 1/3 remaining is used for validation(32li)
   
   
-  ## Modèle linéaire -----
+  ## Linear model -----
   
   #Axe 1
   linear_model1<-lm( RDA1 ~ pC + cn + pH + NPP + map + mat + forest + conifer +
@@ -153,14 +153,14 @@ for (i in 1:B){
   
   
   
-  ## Calcul de la distance (MSE) ----
+  ## Distance computation (MSE) ----
   
   MSE1<- mean((val_fg$RDA1 - y1_est)^2)
   MSE2<- mean((val_fg$RDA2 - y2_est)^2)
   MSE3<- mean((val_fg$RDA3 - y3_est)^2)
 
   
-  ## Enregistrement des coefficients et des MSE ----
+  ## Storing coefficients and MSE ----
   
   ## Coefficients 
   
@@ -183,7 +183,7 @@ for (i in 1:B){
 
 ## ____End of loop____ ----
 
-#Proposition: la liste "cols" correspond exactement à ce vecteur
+#Proposition: list "cols" corresponds exactly at this vector 
 colnames(full_lm1) <- c("Intercept", "pC", "cn", "pH", "NPP", "map", "mat", "forest", "conifer",
                         "relEM", "P", "K", "Ca", "Mg")
 colnames(full_lm2) <- c("Intercept", "pC", "cn", "pH", "NPP", "map", "mat", "forest", "conifer",
@@ -200,7 +200,7 @@ head(full_lm3)
 
 head(scores)
 
-# MODELE LINEAIRE MOYEN FINAL ----
+# FINAL MEAN LINEAIRE MODEL   ----
 LM1_final<- data.frame('LM1'=rapply (full_lm1, mean)) %>% t()
 LM2_final<- data.frame('LM2'=rapply (full_lm2, mean)) %>% t()
 LM3_final<- data.frame('LM3'=rapply (full_lm3, mean)) %>% t()
@@ -225,7 +225,7 @@ LM_scores_train$MAE <- c(mean(LM_MAE$MAE1),
 
 # FINAL EVALUATION ----
 
-## Calcul des valeurs estimées Y^ des données finales (25% des données complètes) ----
+##Computing the estimated values Y^ of final data (25% of whole dataset) ----
 
 ### LINEAR MODEL ----
 
@@ -287,12 +287,12 @@ Ypredict_lm <- data.frame('Y_final_est1'=FINAL_lm1_y_predict$y_est,
 
 
 
-## Projection des valeurs réelles et estimées----
+## Projection of real and estimated values ----
 
 fitted_values_proj <- data.frame(predict(RDA, x=test_final_env, y=test_final_fg, type="wa"))
 head(fitted_values_proj)
 head(test_final_fg)
-plot(RDA, display = c("species", "reg"))#inertie sur l'axe par variable Y : groupe fonctionnel
+plot(RDA, display = c("species", "reg"))# inbertia on the axis by variable Y :  fonctionnal group
 plot(RDA, display = c("reg", "sp"))#biplot
 plot(RDA, display = "wa")
 points(fitted_values_proj[,1:2], col = "red", pch = 19)
@@ -344,10 +344,10 @@ for (i in 1:B){
   cv_results3 <- data.frame(alpha = alphas, min_cvm = NA, lambda_min = NA)
   
 
-  # création de deux groupes pour l'entrainement(train) et la validation croisée(val)
+  # création of 2 groups for training(train) et la validation croisée(val)
   
-  train_fg <- RDA_coordinates %>% sample_frac(2/3) #on prend les coordonnees de 2/3 des data d'entrainement (96li)
-  val_fg<-setdiff(RDA_coordinates,train_fg)#le 1/3 restant est utilise pour la validation(32li)
+  train_fg <- RDA_coordinates %>% sample_frac(2/3) # we take coordonate of  2/3 of training data (96li)
+  val_fg<-setdiff(RDA_coordinates,train_fg)# 1/3 remaining is used for validation( 32li)
   
   ## Search Grid over alpha -----
   for (j in seq_along(alphas)) {
