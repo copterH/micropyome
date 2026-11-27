@@ -187,6 +187,10 @@ head(full_lm3)
 
 head(scores)
 
+#MODELE LINEAIRE MOYEN FINAL ----
+LM1_final<- data.frame('LM1'=rapply (full_lm1, mean)) %>% t()
+LM2_final<- data.frame('LM2'=rapply (full_lm2, mean)) %>% t()
+LM3_final<- data.frame('LM3'=rapply (full_lm3, mean)) %>% t()
 
 #Creation of the final model : Mean of all coefficient.
 
@@ -235,37 +239,68 @@ score_mae_1_valid_man ; score_mae_2_valid_man ; score_mae_3_valid_man #manually 
 
 
 
-#EVALUATION FINALE  -----
-# predict (linear_model1, newdata = valid )#s$class #old version of model prediction
-#axe 1 of the RDA
-head(test_final_env) #environmental data obs  of final validation dataset : used to predict
-head(test_final_fg) #functional group data obs of final validation dataset : not to be touched, only to compare
-full_lm1#dataframe containing the values coefficient of all the iteration of the linear model in the loop
-dim(full_lm1)# it contain 100 lines, corresponding to 100 iterations in MonteCarlo loop
+#EVALUATION FINALE  ----- 
 
 
-Y_final_est1_mean <- rapply (full_lm1, mean) #compute the mean of the lines for each column #correspond to the coefficient of the "best" model
-
-# linear_model1_mean <-  lm( RDA1 ~ pC + cn + pH + NPP + map + mat + forest + conifer + relEM + P + K + Ca + Mg, data = Y_final_est1_mean) #trying method for applying the model
+## Calcul des valeurs estimées Y^ des données finales (25% des données complètes) ----
 
 
-Y_final_est1<- ( test_final_env * Y_final_est1_mean ) #from the coeff of the model, computes the predictions for validation dataset
-
-score_mae_1_final_fc <- mae(test_final_env, Y_final_est1 )
-score_mae_1_final_man <- (1/(nrow(test_final_env))) * sum(abs(test_final_env - Y_valid_est1))
+### LINEAR MODEL ----
 
 
+####Y^  Axe 1 ----
 
-#axe 2
-Y_final_est2<-predict (linear_model2, newdata = test_final_env )
+FINAL_lm1_y_predict<- test_final_env %>% 
+  
+  #1. Multiplication of coefficient * values
+  mutate(
+    across( #across : apply function to multiple columns
+      all_of(cols), #were to apply it
+      ~ .x * as.numeric(LM1_final['LM1',cur_column()]))) %>% #which function. Here multiply the column by the coefficient factor
+  
+  #2. Sum of coefficient and add intercept
+  mutate(y_est=rowSums(across(all_of(cols)))) %>%
+  mutate(y_est, y_est=y_est + as.numeric(LM1_final['LM1','Intercept'])) %>%
+  
+  #3. Select to have only y1_est
+  select(y_est)
 
-#axe 3
-Y_final_est3<-predict (linear_model3, newdata = test_final_env )
-Ypredict_lm<- data.frame(Y_final_est1,Y_final_est2,Y_final_est3) # un test pour predict
+####Y^  Axe 2 ----
 
-   
+FINAL_lm2_y_predict<- test_final_env %>% 
+  
+  #1. Multiplication of coefficient * values
+  mutate(
+    across( #across : apply function to multiple columns
+      all_of(cols), #were to apply it
+      ~ .x * as.numeric(LM2_final['LM2',cur_column()]))) %>% #which function. Here multiply the column by the coefficient factor
+  
+  #2. Sum of coefficient and add intercept
+  mutate(y_est=rowSums(across(all_of(cols)))) %>%
+  mutate(y_est, y_est=y_est + as.numeric(LM2_final['LM2','Intercept'])) %>%
+  
+  #3. Select to have only y2_est
+  select(y_est)
 
-#Projection des valeurs réelles et estimées----
+
+####Y^  Axe 3 ----
+
+FINAL_lm2_y_predict<- test_final_env %>% 
+  
+  #1. Multiplication of coefficient * values
+  mutate(
+    across( #across : apply function to multiple columns
+      all_of(cols), #were to apply it
+      ~ .x * as.numeric(LM3_final['LM3',cur_column()]))) %>% #which function. Here multiply the column by the coefficient factor
+  
+  #2. Sum of coefficient and add intercept
+  mutate(y_est=rowSums(across(all_of(cols)))) %>%
+  mutate(y_est, y_est=y_est + as.numeric(LM3_final['LM3','Intercept'])) %>%
+  
+  #3. Select to have only y2_est
+  select(y_est)
+
+## Projection des valeurs réelles et estimées----
 
 fitted_values_proj <- data.frame(predict(RDA, x=test_final_env, y=test_final_fg, type="wa"))
 head(fitted_values_proj)
@@ -286,7 +321,7 @@ Eval$RMSE<-c(sqrt(mean((fitted_values_proj$RDA1 - Ypredict_lm$Y_final_est1)^2)),
 
 
 
-#MAE = Mean Absolute Error
+## MAE = Mean Absolute Error ----
 
 fitted_values_proj$RDA1 # Observed values of axis RDA1, in the Final Validation set
 Ypredict_lm$Y_final_est1 # Predicted values of linear model 1, in the Final Validation set, only the values
