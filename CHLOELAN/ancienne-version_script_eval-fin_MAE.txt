@@ -1,0 +1,50 @@
+MAE 
+
+#27-11 a 18H00 fixing conflict 
+
+#################
+
+Y_final_est1 <- rapply( c(test_final_env * Y_final_est1_mean) ) #from the coeff of the model, computes the predictions for validation dataset
+test_final_env$pC * Y_final_est1_mean[2]
+score_mae_1_final_fc <- mae(test_final_env, Y_final_est1 )
+score_mae_1_final_man <- (1/(nrow(test_final_env))) * sum(abs(test_final_env - Y_valid_est1))
+
+
+--------------------------------------------------------------------------------------------------------------
+
+######################################################################################################################""""
+
+
+
+#version du 27-11-25 avant modif des moyennes des 100 lm (on ne prenait que lm1) (debut aprem)
+
+#MAE = Mean Absolute Error
+
+fitted_values_proj$RDA1 # Observed values of axis RDA1, in the Final Validation set
+Ypredict_lm$Y_final_est1 # Predicted values of linear model 1, in the Final Validation set, only the values
+Y_final_est1 # Predicted values of linear model 1, in the Final Validation set, identifier of sample with values
+
+score_mae_1_final <- mae(fitted_values_proj$RDA1, Ypredict_lm$Y_final_est1) #
+score_mae_1_final_bis <- (1/(nrow(fitted_values_proj))) * sum(abs(fitted_values_proj$RDA1 - Ypredict_lm$Y_final_est1))
+
+
+score_mae_2_final <- mae(fitted_values_proj$RDA2, Ypredict_lm$Y_final_est2)#compute the MAE score using the function mae{Metrics}
+score_mae_2_final_bis <- (1/(nrow(fitted_values_proj))) * sum(abs(fitted_values_proj$RDA2 - Ypredict_lm$Y_final_est2))#compute the MAE score manually, using the formula 1/N * sum|y_est - y^_est|
+score_mae_3_final <- mae (fitted_values_proj$RDA3, Ypredict_lm$Y_final_est3) #score 3 is higher
+score_mae_3_final_bis <- (1/(nrow(fitted_values_proj))) * sum(abs(fitted_values_proj$RDA3 - Ypredict_lm$Y_final_est3))
+#print MAE values for 3 RDA axes in the Final Evaluation Set
+score_mae_1_final ; score_mae_2_final ; score_mae_3_final
+
+#> score_mae_1_valid_fc ; score_mae_2_valid_fc ; score_mae_3_valid_fc
+#distance matrix
+dist_1 <- y1_est$RDA1 - y1_est$y_est
+dist_2 <- y2_est$RDAD - y2_est$y_est
+dist_3 <- y3_est$RDA3 - y3_est$y_est
+#r2 = 1-(MSE/MST)
+
+
+# r2_1 <- 1 - (score_new1^2)/ (mst (dist_1)) #TEST pour calcul du R²
+r2_1 <- RsquareAdj(y1_est$RDA1, y1_est$y_est, n = 32) #r2 is lower  
+r2_2 <- RsquareAdj(y2_est$RDA2, y2_est$y_est, n = 32)
+r2_3 <- RsquareAdj(y3_est$RDA3, y3_est$y_est, n = 32)
+
