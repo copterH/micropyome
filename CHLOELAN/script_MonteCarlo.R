@@ -373,7 +373,7 @@ mean(r2_3)
 
 ## SAVING SCORES IN DATAFRAME ----
 
-MC_score_train <- data.frame(row.names = c("Axe1","Axe2","Axe3"))
+MC_scores_train <- data.frame(row.names = c("Axe1","Axe2","Axe3"))
 
 
 
@@ -587,7 +587,7 @@ EN_scores_train$MAE<-c(mae(EN_y1_est_train$RDA1,EN_y1_est_train$y_est),
 
 # COMPARING MC AND EN ----
 
-
+MC_sc
 
 
 
