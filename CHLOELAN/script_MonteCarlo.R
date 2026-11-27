@@ -22,7 +22,7 @@ library(glmnet)
 set.seed(123)
 
 
-#IMPORTATION DES DONNEES----
+# IMPORTATION DES DONNEES----
 
 ##Functionnal groups----
 file_fg <- data.frame(read_csv("fg_observed_averyll.csv", show_col_types = FALSE))
@@ -193,7 +193,7 @@ head(full_lm3)
 
 head(scores)
 
-#MODELE LINEAIRE MOYEN FINAL ----
+# MODELE LINEAIRE MOYEN FINAL ----
 LM1_final<- data.frame('LM1'=rapply (full_lm1, mean)) %>% t()
 LM2_final<- data.frame('LM2'=rapply (full_lm2, mean)) %>% t()
 LM3_final<- data.frame('LM3'=rapply (full_lm3, mean)) %>% t()
@@ -557,17 +557,12 @@ EN_y3_est_train<- RDA_coordinates %>%
 EN_scores_train <- data.frame(row.names = c("Axe1","Axe2","Axe3"))
 
 EN_scores_train$RMSE <- c(sqrt(mean((EN_y1_est_train$RDA1 - EN_y1_est_train$y_est)^2)),
-                        sqrt(mean((EN_y2_est_train$RDA2 - EN_y2_est_train$y_est)^2)),
-                        sqrt(mean((EN_y3_est_train$RDA3 - EN_y3_est_train$y_est)^2)))
+                          sqrt(mean((EN_y2_est_train$RDA2 - EN_y2_est_train$y_est)^2)),
+                          sqrt(mean((EN_y3_est_train$RDA3 - EN_y3_est_train$y_est)^2)))
 
 EN_scores_train$MAE <- c(mae(EN_y1_est_train$RDA1,EN_y1_est_train$y_est),
-                       mae(EN_y2_est_train$RDA2, EN_y2_est_train$y_est),
-                       mae(EN_y3_est_train$RDA3, EN_y3_est_train$y_est))
-
-EN_scores_train$r2 <- c(mean(RsquareAdj(EN_y1_est_train$RDA1, EN_y1_est_train$y_est, n = 32)),
-                        mean(RsquareAdj(EN_y2_est_train$RDA2, EN_y2_est_train$y_est, n = 32)),
-                        mean(RsquareAdj(EN_y3_est_train$RDA3, EN_y3_est_train$y_est, n = 32))
-                        )
+                        mae(EN_y2_est_train$RDA2, EN_y2_est_train$y_est),
+                        mae(EN_y3_est_train$RDA3, EN_y3_est_train$y_est))
 
 
 
@@ -639,19 +634,24 @@ EN_scores_eval$MAE <- c(mae(EN_y1_est_eval$RDA1,EN_y1_est_eval$y_est),
                          mae(EN_y2_est_eval$RDA2, EN_y2_est_eval$y_est),
                          mae(EN_y3_est_eval$RDA3, EN_y3_est_eval$y_est))
 
-EN_scores_eval$r2 <- c(mean(RsquareAdj(EN_y1_est_eval$RDA1, EN_y1_est_eval$y_est, n = 32)),
-                        mean(RsquareAdj(EN_y2_est_eval$RDA2, EN_y2_est_eval$y_est, n = 32)),
-                        mean(RsquareAdj(EN_y3_est_eval$RDA3, EN_y3_est_eval$y_est, n = 32))
-                       )
 
+# COMPARING LMtrain AND LMeval ----
 
+LM_scores_train
+LM_scores_eval
+
+LM_diff
+
+# COMPARING ENtrain AND ENeval ----
 
 
 # COMPARING MC AND EN ----
 
-MC_scores_eval
+LM_scores_eval
 
 EN_scores_eval
+
+
 
 
 
