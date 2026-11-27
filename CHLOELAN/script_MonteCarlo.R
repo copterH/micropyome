@@ -279,7 +279,7 @@ score_mae_1_valid_fc ; score_mae_2_valid_fc ; score_mae_3_valid_fc
 
 
 
-#EVALUATION FINALE  -----
+## EVALUATION FINALE  -----
 # predict (linear_model1, newdata = valid )#s$class #old version of model prediction
 #axe 1 of the RDA
 test_final_env #data obs of final validation dataset
@@ -570,24 +570,58 @@ EN_y3_est_train<- RDA_coordinates %>%
   select(Row.names,RDA3,y_est)
 
 
-###RMSE ----
+### RMSE train ----
 
-EN_scores_train<-data.frame(row.names = c("Axe1","Axe2","Axe3"))
+EN_scores_train <- data.frame(row.names = c("Axe1","Axe2","Axe3"))
 
-EN_scores_train$RMSE<-c(sqrt(mean((EN_y1_est_train$RDA1 - EN_y1_est_train$y_est)^2)),
+EN_scores_train$RMSE <- c(sqrt(mean((EN_y1_est_train$RDA1 - EN_y1_est_train$y_est)^2)),
                         sqrt(mean((EN_y2_est_train$RDA2 - EN_y2_est_train$y_est)^2)),
                         sqrt(mean((EN_y3_est_train$RDA3 - EN_y3_est_train$y_est)^2)))
 
-EN_scores_train$MAE<-c(mae(EN_y1_est_train$RDA1,EN_y1_est_train$y_est),
+EN_scores_train$MAE <- c(mae(EN_y1_est_train$RDA1,EN_y1_est_train$y_est),
                        mae(EN_y2_est_train$RDA2, EN_y2_est_train$y_est),
                        mae(EN_y3_est_train$RDA3, EN_y3_est_train$y_est))
+
+EN_scores_train$r2 <- c(mean(RsquareAdj(EN_y1_est_train$RDA1, EN_y1_est_train$y_est, n = 32)),
+                        mean(RsquareAdj(EN_y2_est_train$RDA2, EN_y2_est_train$y_est, n = 32)),
+                        mean(RsquareAdj(EN_y3_est_train$RDA3, EN_y3_est_train$y_est, n = 32))
+                        )
+
+
+
+## FINAL EVALUATION OF EN ----
+
+### Predict val ----
+
+
+
+## Calculation of ----
+
+EN_scores_val <- data.frame(row.names = c("Axe1","Axe2","Axe3"))
+
+EN_scores_val$RMSE <- c(sqrt(mean((EN_y1_est_train$RDA1 - EN_y1_est_train$y_est)^2)),
+                          sqrt(mean((EN_y2_est_train$RDA2 - EN_y2_est_train$y_est)^2)),
+                          sqrt(mean((EN_y3_est_train$RDA3 - EN_y3_est_train$y_est)^2)))
+
+EN_scores_val$MAE <- c(mae(EN_y1_est_train$RDA1,EN_y1_est_train$y_est),
+                         mae(EN_y2_est_train$RDA2, EN_y2_est_train$y_est),
+                         mae(EN_y3_est_train$RDA3, EN_y3_est_train$y_est))
+
+EN_scores_val$r2 <- c(mean(RsquareAdj(EN_y1_est_train$RDA1, EN_y1_est_train$y_est, n = 32)),
+                        mean(RsquareAdj(EN_y2_est_train$RDA2, EN_y2_est_train$y_est, n = 32)),
+                        mean(RsquareAdj(EN_y3_est_train$RDA3, EN_y3_est_train$y_est, n = 32))
+)
 
 
 
 
 # COMPARING MC AND EN ----
 
-MC_sc
+MC_scores_val
+
+EN_scores_val
+
+
 
 
 
