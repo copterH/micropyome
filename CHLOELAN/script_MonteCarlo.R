@@ -360,7 +360,7 @@ df_hp1 <- data.frame(best_alpha = NA, best_lambda = NA)
 df_hp2 <- data.frame(best_alpha = NA, best_lambda = NA)
 df_hp3 <- data.frame(best_alpha = NA, best_lambda = NA)
 
-B<-10
+B<-100
 
 for (i in 1:B){
   print(paste0(i,"/100"))
@@ -557,7 +557,7 @@ EN_scores_train$r2 <- c(mean(RsquareAdj(EN_y1_est_train$RDA1, EN_y1_est_train$y_
 ### Calculation of Y^ eval ----
 
 #### Y^  Axe 1 ----
-EN_y1_est_eval<- RDA_coordinates %>% 
+EN_y1_est_eval<- test_final_env %>% 
   
   #1. Multiplication of coefficient * values
   mutate(
@@ -570,11 +570,11 @@ EN_y1_est_eval<- RDA_coordinates %>%
   mutate(y_est, y_est=y_est + as.numeric(final_coefs1['(Intercept)', ])) %>%
   
   #3. Select to have only RDA1, y1_est
-  select(Row.names,RDA1,y_est)
+  select(y_est)
 
 
 #### Y^  Axe 2 ----
-EN_y2_est_eval<- RDA_coordinates %>% 
+EN_y2_est_eval<- test_final_env %>% 
   
   #1. Multiplication of coefficient * values
   mutate(
@@ -587,7 +587,7 @@ EN_y2_est_eval<- RDA_coordinates %>%
   mutate(y_est, y_est=y_est + as.numeric(final_coefs2['(Intercept)', ])) %>%
   
   #3. Select to have only RDA2, y2_est
-  select(Row.names,RDA2,y_est)
+  select(y_est)
 
 
 #### Y^  Axe 3 ----
@@ -604,35 +604,35 @@ EN_y3_est_eval<- test_final_env %>%
   mutate(y_est, y_est=y_est + as.numeric(final_coefs3['(Intercept)', ])) %>%
   
   #3. Select to have only RDA3, y3_est
-  select(Row.names,RDA3,y_est)
+  select(y_est)
 
 
 
 ## Calculation of scores ----
 
-EN_scores_val <- data.frame(row.names = c("Axe1","Axe2","Axe3"))
+EN_scores_eval <- data.frame(row.names = c("Axe1","Axe2","Axe3"))
 
-EN_scores_val$RMSE <- c(sqrt(mean((EN_y1_est_train$RDA1 - EN_y1_est_train$y_est)^2)),
-                          sqrt(mean((EN_y2_est_train$RDA2 - EN_y2_est_train$y_est)^2)),
-                          sqrt(mean((EN_y3_est_train$RDA3 - EN_y3_est_train$y_est)^2)))
+EN_scores_eval$RMSE <- c(sqrt(mean((EN_y1_est_eval$RDA1 - EN_y1_est_eval$y_est)^2)),
+                          sqrt(mean((EN_y2_est_eval$RDA2 - EN_y2_est_eval$y_est)^2)),
+                          sqrt(mean((EN_y3_est_eval$RDA3 - EN_y3_est_eval$y_est)^2)))
 
-EN_scores_val$MAE <- c(mae(EN_y1_est_train$RDA1,EN_y1_est_train$y_est),
-                         mae(EN_y2_est_train$RDA2, EN_y2_est_train$y_est),
-                         mae(EN_y3_est_train$RDA3, EN_y3_est_train$y_est))
+EN_scores_eval$MAE <- c(mae(EN_y1_est_eval$RDA1,EN_y1_est_eval$y_est),
+                         mae(EN_y2_est_eval$RDA2, EN_y2_est_eval$y_est),
+                         mae(EN_y3_est_eval$RDA3, EN_y3_est_eval$y_est))
 
-EN_scores_val$r2 <- c(mean(RsquareAdj(EN_y1_est_train$RDA1, EN_y1_est_train$y_est, n = 32)),
-                        mean(RsquareAdj(EN_y2_est_train$RDA2, EN_y2_est_train$y_est, n = 32)),
-                        mean(RsquareAdj(EN_y3_est_train$RDA3, EN_y3_est_train$y_est, n = 32))
-)
+EN_scores_eval$r2 <- c(mean(RsquareAdj(EN_y1_est_eval$RDA1, EN_y1_est_eval$y_est, n = 32)),
+                        mean(RsquareAdj(EN_y2_est_eval$RDA2, EN_y2_est_eval$y_est, n = 32)),
+                        mean(RsquareAdj(EN_y3_est_eval$RDA3, EN_y3_est_eval$y_est, n = 32))
+                       )
 
 
 
 
 # COMPARING MC AND EN ----
 
-MC_scores_val
+MC_scores_eval
 
-EN_scores_val
+EN_scores_eval
 
 
 
