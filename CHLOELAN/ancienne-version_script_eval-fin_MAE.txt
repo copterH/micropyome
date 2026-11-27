@@ -1,5 +1,22 @@
 MAE 
-#version du 27-11-25 avant modif des moyennes des 100 lm (on ne prenait que lm1)
+
+#27-11 a 18H00 fixing conflict 
+
+#################
+
+Y_final_est1 <- rapply( c(test_final_env * Y_final_est1_mean) ) #from the coeff of the model, computes the predictions for validation dataset
+test_final_env$pC * Y_final_est1_mean[2]
+score_mae_1_final_fc <- mae(test_final_env, Y_final_est1 )
+score_mae_1_final_man <- (1/(nrow(test_final_env))) * sum(abs(test_final_env - Y_valid_est1))
+
+
+--------------------------------------------------------------------------------------------------------------
+
+######################################################################################################################""""
+
+
+
+#version du 27-11-25 avant modif des moyennes des 100 lm (on ne prenait que lm1) (debut aprem)
 
 #MAE = Mean Absolute Error
 
