@@ -355,6 +355,7 @@ mean(r2_1)#lower
 mean(r2_2)
 mean(r2_3)
 
+#to do after : put in column for RMSE, MAE and R² inside MC_scores_val
 ## SAVING SCORES IN DATAFRAME ----
 
 MC_scores_val <- data.frame(row.names = c("Axe1","Axe2","Axe3"))
@@ -559,6 +560,7 @@ EN_scores_train <- data.frame(row.names = c("Axe1","Axe2","Axe3"))
 EN_scores_train$RMSE <- c(sqrt(mean((EN_y1_est_train$RDA1 - EN_y1_est_train$y_est)^2)),
                           sqrt(mean((EN_y2_est_train$RDA2 - EN_y2_est_train$y_est)^2)),
                           sqrt(mean((EN_y3_est_train$RDA3 - EN_y3_est_train$y_est)^2)))
+
 
 EN_scores_train$MAE <- c(mae(EN_y1_est_train$RDA1,EN_y1_est_train$y_est),
                         mae(EN_y2_est_train$RDA2, EN_y2_est_train$y_est),
