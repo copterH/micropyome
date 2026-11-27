@@ -250,8 +250,8 @@ Y_final_est1_mean <- rapply (full_lm1, mean) #compute the mean of the lines for 
 # linear_model1_mean <-  lm( RDA1 ~ pC + cn + pH + NPP + map + mat + forest + conifer + relEM + P + K + Ca + Mg, data = Y_final_est1_mean) #trying method for applying the model
 
 
-Y_final_est1<- ( test_final_env * Y_final_est1_mean ) #from the coeff of the model, computes the predictions for validation dataset
-
+Y_final_est1 <- rapply( c(test_final_env * Y_final_est1_mean) ) #from the coeff of the model, computes the predictions for validation dataset
+test_final_env$pC * Y_final_est1_mean[2]
 score_mae_1_final_fc <- mae(test_final_env, Y_final_est1 )
 score_mae_1_final_man <- (1/(nrow(test_final_env))) * sum(abs(test_final_env - Y_valid_est1))
 
@@ -329,9 +329,10 @@ mean(r2_1)#lower
 mean(r2_2)
 mean(r2_3)
 
+#to do after : put in column for RMSE, MAE and R² inside MC_scores_val
 ## SAVING SCORES IN DATAFRAME ----
 
-MC_scores_train <- data.frame(row.names = c("Axe1","Axe2","Axe3"))
+MC_scores_val <- data.frame(row.names = c("Axe1","Axe2","Axe3"))
 
 
 
@@ -535,6 +536,10 @@ EN_scores_train<-data.frame(row.names = c("Axe1","Axe2","Axe3"))
 EN_scores_train$RMSE<-c(sqrt(mean((EN_y1_est_train$RDA1 - EN_y1_est_train$y_est)^2)),
                         sqrt(mean((EN_y2_est_train$RDA2 - EN_y2_est_train$y_est)^2)),
                         sqrt(mean((EN_y3_est_train$RDA3 - EN_y3_est_train$y_est)^2)))
+EN_scores_train_RMSE1_fc <- rmse (EN_y1_est_train$RDA1, EN_y1_est_train$y_est)#using the function, we find the same RMSE value than manually write the formula
+EN_scores_train_RMSE2_fc <- rmse (EN_y2_est_train$RDA2, EN_y2_est_train$y_est)
+EN_scores_train_RMSE3_fc <- rmse (EN_y3_est_train$RDA3, EN_y3_est_train$y_est)
+
 
 EN_scores_train$MAE<-c(mae(EN_y1_est_train$RDA1,EN_y1_est_train$y_est),
                        mae(EN_y2_est_train$RDA2, EN_y2_est_train$y_est),
