@@ -15,9 +15,9 @@ rm(list=ls())
 library(tidyverse) # data manipulation
 library(vegan) # RDA
 library(Metrics)
-library(cv)
+library(cv) #cross validation
 library(ape)
-library(glmnet)
+library(glmnet) #linear model
 
 set.seed(123)
 
@@ -336,6 +336,7 @@ plot(RDA, display = "wa")
 points(fitted_values_proj[,1:2], col = "red", pch = 19)
 
 points(Ypredict_lm[, 1:2], col = "blue", pch = 19)  
+points(EN_predict_eval[, 1:2], col = "chartreuse", pch = 19)  
 
 #Evaluation criteria
 LM_scores_eval<-data.frame(row.names = c("Axe1","Axe2","Axe3"))
@@ -474,19 +475,19 @@ final_lambda3 <- mean(df_hp3[,"best_lambda"])
 EN_lm1 <- cv.glmnet(as.matrix(train_fg[,5:ncol(train_fg)]),
                     train_fg[,"RDA1"],
                     alpha = final_alpha1, nfolds = 10)
-final_coefs1 <- coef(EN_lm1, s = "lambda.1se")
+final_coefs1 <- coef(EN_lm1, s = "lambda.min")
 
 # Axe 2
 EN_lm2 <- cv.glmnet(as.matrix(train_fg[,5:ncol(train_fg)]),
                     train_fg[,"RDA2"],
                     alpha = final_alpha2, nfolds = 10)
-final_coefs2 <- coef(EN_lm2, s = "lambda.1se")
+final_coefs2 <- coef(EN_lm2, s = "lambda.min")
 
 # Axe 3
 EN_lm3 <- cv.glmnet(as.matrix(train_fg[,5:ncol(train_fg)]),
                     train_fg[,"RDA3"],
                     alpha = final_alpha3, nfolds = 10)
-final_coefs3 <- coef(EN_lm3, s = "lambda.1se")
+final_coefs3 <- coef(EN_lm3, s = "lambda.min")
 
 
 ## Calculation of Y^ ----
@@ -611,7 +612,9 @@ EN_y3_est_eval<- test_final_env %>%
   #3. Select to have only RDA3, y3_est
   select(y_est)
 
-
+EN_predict_eval <- data.frame('Y3_final_predict'=EN_y1_est_eval$y_est, 
+                              'Y2_final_predict'=EN_y2_est_eval$y_est,
+                              'Y3_final_predict'=EN_y3_est_eval$y_est, row.names = row.names(FINAL_lm1_y_predict))
 
 ## Calculation of scores ----
 
