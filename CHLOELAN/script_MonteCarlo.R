@@ -198,7 +198,7 @@ head(scores)
 #Creation of the final model : Mean of all coefficient.
 
 
-# Calcul of RMSE ----
+## Calcul of RMSE ----
 
 RMSE1 <- sqrt(sum(scores$score1)/B)
 RMSE2 <- sqrt(sum(scores$score2)/B)
@@ -209,10 +209,11 @@ print(RMSE2)
 print(RMSE3)
 
 
-###VALID in training set 
+###VALID in training set ???
 
 
-##  Compute MAE on the test set inside the training set ------
+##  Compute MAE on the test set inside the training set ----
+
 val_fg #validation set inside training set
 ### MAE 1 -----
 Y_valid_est1<-predict (linear_model1, newdata = val_fg)
@@ -242,7 +243,8 @@ score_mae_1_valid_man ; score_mae_2_valid_man ; score_mae_3_valid_man #manually 
 
 
 
-## EVALUATION FINALE  -----
+# FINAL EVALUATION ----
+
 # predict (linear_model1, newdata = valid )#s$class #old version of model prediction
 #axe 1 of the RDA
 head(test_final_env) #environmental data obs  of final validation dataset : used to predict
@@ -359,7 +361,7 @@ df_hp1 <- data.frame(best_alpha = NA, best_lambda = NA)
 df_hp2 <- data.frame(best_alpha = NA, best_lambda = NA)
 df_hp3 <- data.frame(best_alpha = NA, best_lambda = NA)
 
-B<-100
+B<-10
 
 for (i in 1:B){
   print(paste0(i,"/100"))
@@ -498,8 +500,6 @@ EN_y1_est_train<- RDA_coordinates %>%
   select(Row.names,RDA1,y_est)
 
 
-
-
 ###Y^  Axe 2 ----
 EN_y2_est_train<- RDA_coordinates %>% 
   
@@ -534,7 +534,7 @@ EN_y3_est_train<- RDA_coordinates %>%
   select(Row.names,RDA3,y_est)
 
 
-### RMSE train ----
+### scores train ----
 
 EN_scores_train <- data.frame(row.names = c("Axe1","Axe2","Axe3"))
 
@@ -555,11 +555,61 @@ EN_scores_train$r2 <- c(mean(RsquareAdj(EN_y1_est_train$RDA1, EN_y1_est_train$y_
 
 ## FINAL EVALUATION OF EN ----
 
-### Predict val ----
+### Calculation of Y^ eval ----
+
+#### Y^  Axe 1 ----
+EN_y1_est_eval<- RDA_coordinates %>% 
+  
+  #1. Multiplication of coefficient * values
+  mutate(
+    across( #across : apply function to multiple columns
+      all_of(cols), #were to apply it
+      ~ .x * as.numeric(final_coefs1[cur_column(),]))) %>% #which function. Here multiply the column by the coefficient factor
+  
+  #2. Sum of coefficient and add intercept
+  mutate(y_est=rowSums(across(all_of(cols)))) %>%
+  mutate(y_est, y_est=y_est + as.numeric(final_coefs1['(Intercept)', ])) %>%
+  
+  #3. Select to have only RDA1, y1_est
+  select(Row.names,RDA1,y_est)
+
+
+#### Y^  Axe 2 ----
+EN_y2_est_eval<- RDA_coordinates %>% 
+  
+  #1. Multiplication of coefficient * values
+  mutate(
+    across( #across : apply function to multiple columns
+      all_of(cols), #were to apply it
+      ~ .x * as.numeric(final_coefs2[cur_column(),]))) %>% #which function. Here multiply the column by the coefficient factor
+  
+  #2. Sum of coefficient and add intercept
+  mutate(y_est=rowSums(across(all_of(cols)))) %>%
+  mutate(y_est, y_est=y_est + as.numeric(final_coefs2['(Intercept)', ])) %>%
+  
+  #3. Select to have only RDA2, y2_est
+  select(Row.names,RDA2,y_est)
+
+
+#### Y^  Axe 3 ----
+EN_y3_est_eval<- test_final_env %>% 
+  
+  #1. Multiplication of coefficient * values
+  mutate(
+    across( #across : apply function to multiple columns
+      all_of(cols), #were to apply it
+      ~ .x * as.numeric(final_coefs3[cur_column(),]))) %>% #which function. Here multiply the column by the coefficient factor
+  
+  #2. Sum of coefficient and add intercept
+  mutate(y_est=rowSums(across(all_of(cols)))) %>%
+  mutate(y_est, y_est=y_est + as.numeric(final_coefs3['(Intercept)', ])) %>%
+  
+  #3. Select to have only RDA3, y3_est
+  select(Row.names,RDA3,y_est)
 
 
 
-## Calculation of ----
+## Calculation of scores ----
 
 EN_scores_val <- data.frame(row.names = c("Axe1","Axe2","Axe3"))
 
