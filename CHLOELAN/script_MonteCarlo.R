@@ -212,7 +212,7 @@ print(RMSE2)
 print(RMSE3)
 
 
-###VALID in training set ???
+###VALID in training set (???)
 
 
 ##  Compute MAE on the test set inside the training set ----
