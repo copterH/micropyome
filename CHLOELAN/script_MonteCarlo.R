@@ -141,14 +141,13 @@ for (i in 1:B){
   
   ## Validation ----
   
-  ###Y^  Axe 1 ----
+  #Y^  Axe 1
   y1_est<-predict (linear_model1, newdata = val_fg)
   
-  ###Y^  Axe 2 ----
+  #Y^  Axe 2
   y2_est<-predict (linear_model2, newdata = val_fg)
   
-  
-  ###Y^  Axe 3 ----
+  #Y^  Axe 3
   y3_est<-predict (linear_model3, newdata = val_fg)
   
   
@@ -339,7 +338,7 @@ mean(r2_3)
 
 ## SAVING SCORES IN DATAFRAME ----
 
-MC_scores_train <- data.frame(row.names = c("Axe1","Axe2","Axe3"))
+MC_scores_val <- data.frame(row.names = c("Axe1","Axe2","Axe3"))
 
 
 
