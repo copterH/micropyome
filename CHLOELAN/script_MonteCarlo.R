@@ -17,6 +17,7 @@ library(vegan) # RDA
 library(Metrics)
 library(cv)
 library(ape)
+library(glmnet)
 
 set.seed(123)
 
@@ -30,8 +31,6 @@ row.names(file_fg)<-file_fg[,1]#on renomme les indices par la première colonne
 ##Environmental parameters----
 file_env<-data.frame(read_csv("13_variables_averyll.csv", show_col_types = FALSE))
 row.names(file_env)<-file_env[,1]
-
-
 
 
 
@@ -88,6 +87,8 @@ plot(RDA, display = "wa")#points
 RDA_coordinates<-data.frame(merge(RDA_coordinates,env_observed,by=0))%>% as.data.frame()
 
 
+#Récupération des noms des variables
+cols<-intersect(names(RDA_coordinates), names(env_observed)) #select all factors coefficients
 
 
 
@@ -133,71 +134,25 @@ for (i in 1:B){
   linear_model3<-lm( RDA3 ~ pC + cn + pH + NPP + map + mat + forest + conifer +
                        relEM +P + K + Ca + Mg, data=train_fg) 
   
-  ##Extraction des coefficients et calcul des Y^ ----
-  coef<-data.frame("RDA1_coef"=linear_model1$coefficients, 
-                   "RDA2_coef"=linear_model2$coefficients,
-                   "RDA3_coef"=linear_model3$coefficients) %>%
-    t() %>% as.data.frame()
-  
-  cols<-intersect(names(coef), names(val_fg)) #select all factors coefficients
+  ## Validation ----
   
   ###Y^  Axe 1 ----
-  y1_est<-val_fg %>% 
-    
-    #1. Multiplication of coefficient * values
-    mutate(
-      across( #across : apply function to multiple columns
-        all_of(cols), #were to apply it
-        ~ .x * as.numeric(coef[['RDA1_coef',cur_column()]]))) %>% #which function. Here multiply the column by the coefficient factor
-    
-    #2. Sum of coefficient and add intercept
-    mutate(y_est=rowSums(across(all_of(cols)))) %>%
-    mutate(y_est, y_est=y_est + as.numeric(coef[['RDA1_coef', '(Intercept)']])) %>%
-    
-    #3. Select to have only RDA1, y1_est
-    select(Row.names,RDA1,y_est)
-  
+  y1_est<-predict (linear_model1, newdata = val_fg)
   
   ###Y^  Axe 2 ----
-  y2_est<-val_fg %>% 
-    
-    #1. Multiplication of coefficient * values
-    mutate(
-      across( #across : apply function to multiple columns
-        all_of(cols), #were to apply it
-        ~ .x * as.numeric(coef[['RDA2_coef',cur_column()]]))) %>% #which function. Here multiply the column by the coefficient factor
-    
-    #2. Sum of coefficient and add intercept
-    mutate(y_est=rowSums(across(all_of(cols)))) %>%
-    mutate(y_est, y_est=y_est + as.numeric(coef[['RDA2_coef', '(Intercept)']])) %>%
-    
-    #3. Select to have only RDA1, y1_est
-    select(Row.names,RDA2,y_est)
+  y2_est<-predict (linear_model2, newdata = val_fg)
   
   
   ###Y^  Axe 3 ----
-  y3_est<-val_fg %>% 
-    
-    #1. Multiplication of coefficient * values
-    mutate(
-      across( #across : apply function to multiple columns
-        all_of(cols), #were to apply it
-        ~ .x * as.numeric(coef[['RDA3_coef',cur_column()]]))) %>% #which function. Here multiply the column by the coefficient factor
-    
-    #2. Sum of coefficient and add intercept
-    mutate(y_est=rowSums(across(all_of(cols)))) %>%
-    mutate(y_est, y_est=y_est + as.numeric(coef[['RDA3_coef', '(Intercept)']])) %>%
-    
-    #3. Select to have only RDA1, y1_est
-    select(Row.names,RDA3,y_est)
+  y3_est<-predict (linear_model3, newdata = val_fg)
   
   
   
   ## Calcul de la distance (MSE) ----
   
-  MSE1<- mean((y1_est$RDA1 - y1_est$y_est)^2)
-  MSE2<- mean((y2_est$RDA2 - y2_est$y_est)^2)
-  MSE3<- mean((y3_est$RDA3 - y3_est$y_est)^2)
+  MSE1<- mean((val_fg$RDA1 - y1_est)^2)
+  MSE2<- mean((val_fg$RDA2 - y2_est)^2)
+  MSE3<- mean((val_fg$RDA3 - y3_est)^2)
 
   
   ## Enregistrement des coefficients et des MSE ----
@@ -262,6 +217,7 @@ score_mae_1_valid_man <- (1/(nrow(val_fg))) * sum(abs(val_fg$RDA1 - Y_valid_est1
 
 
 score_mae_1_valid_fc == score_mae_1_valid_man #the values of MAE computed by the function or the manual formula are equals
+
 ### MAE 2, 3 -----
 #we repeat the previous operation for the rda axes 2 and 3
 Y_valid_est2<-predict (linear_model2, newdata = val_fg )
@@ -357,9 +313,9 @@ dist_3 <- y3_est$RDA3 - y3_est$y_est
 
 
 # r2_1 <- 1 - (score_new1^2)/ (mst (dist_1)) #TEST pour calcul du R²
-r2_1 <- RsquareAdj(y1_est$RDA1, y1_est$y_est, n=32) #r2 is lower  
+r2_1 <- RsquareAdj(y1_est$RDA1, y1_est$y_est, n = 32) #r2 is lower  
 r2_2 <- RsquareAdj(y2_est$RDA2, y2_est$y_est, n = 32)
-r2_3 <- RsquareAdj(y3_est$RDA3, y3_est$y_est, n=32)
+r2_3 <- RsquareAdj(y3_est$RDA3, y3_est$y_est, n = 32)
 
 
 
@@ -372,6 +328,11 @@ sum(r2_3)
 mean(r2_1)#lower 
 mean(r2_2)
 mean(r2_3)
+
+## SAVING SCORES IN DATAFRAME ----
+
+MC_scores_train <- data.frame(row.names = c("Axe1","Axe2","Axe3"))
+
 
 
 
@@ -437,6 +398,7 @@ for (i in 1:B){
     cv_results3$lambda_min[j] <- cv_fit3$lambda.min
     
   }
+  
   #Axe 1
   best_idx1 <- which.min(cv_results1$min_cvm)
   best_alpha1 <- cv_results1$alpha[best_idx1]
@@ -482,11 +444,13 @@ print(final_alpha2)
 print(sd(df_hp2[,"best_alpha"]))
 final_lambda2 <- mean(df_hp2[,"best_lambda"])
 
-summary(df_hp3) #Pb: bcp de valeurs très hautes qui gonglent la moyenne ->  est ce qu ela médiane serait mieux ?
+
+summary(df_hp3) #Pb: bcp de valeurs très hautes qui gonflent la moyenne ->  est ce que la médiane serait mieux ?
 final_alpha3 <- mean(df_hp3[,"best_alpha"])
 print(final_alpha3)
 print(sd(df_hp3[,"best_alpha"]))
 final_lambda3 <- mean(df_hp3[,"best_lambda"])
+
 
 #### Return the best models ----
 
@@ -507,6 +471,7 @@ EN_lm3 <- cv.glmnet(as.matrix(train_fg[,5:ncol(train_fg)]),
                     train_fg[,"RDA3"],
                     alpha = final_alpha3, nfolds = 10)
 final_coefs3 <- coef(EN_lm3, s = "lambda.1se")
+
 
 ## Calculation of Y^ ----
 
@@ -561,9 +526,27 @@ EN_y3_est_train<- RDA_coordinates %>%
   
   #3. Select to have only RDA3, y3_est
   select(Row.names,RDA3,y_est)
+
+
 ###RMSE ----
+
 EN_scores_train<-data.frame(row.names = c("Axe1","Axe2","Axe3"))
 
 EN_scores_train$RMSE<-c(sqrt(mean((EN_y1_est_train$RDA1 - EN_y1_est_train$y_est)^2)),
-             sqrt(mean((EN_y2_est_train$RDA2 - EN_y2_est_train$y_est)^2)),
-             sqrt(mean((EN_y3_est_train$RDA3 - EN_y3_est_train$y_est)^2)))
+                        sqrt(mean((EN_y2_est_train$RDA2 - EN_y2_est_train$y_est)^2)),
+                        sqrt(mean((EN_y3_est_train$RDA3 - EN_y3_est_train$y_est)^2)))
+
+EN_scores_train$MAE<-c(mae(EN_y1_est_train$RDA1,EN_y1_est_train$y_est),
+                       mae(EN_y2_est_train$RDA2, EN_y2_est_train$y_est),
+                       mae(EN_y3_est_train$RDA3, EN_y3_est_train$y_est))
+
+
+
+
+# COMPARING MC AND EN ----
+
+MC_sc
+
+
+
+
