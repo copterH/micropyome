@@ -201,7 +201,7 @@ LM3_final<- data.frame('LM3'=rapply (full_lm3, mean)) %>% t()
 #Creation of the final model : Mean of all coefficient.
 
 
-## Calcul of RMSE ----
+## RMSE ----
 
 RMSE1 <- sqrt(sum(scores$score1)/B)
 RMSE2 <- sqrt(sum(scores$score2)/B)
@@ -210,6 +210,20 @@ RMSE3 <- sqrt(sum(scores$score3)/B)
 print(RMSE1)
 print(RMSE2)
 print(RMSE3)
+#Evaluation criteria
+LM_scores_train<-data.frame(row.names = c("Axe1","Axe2","Axe3"))
+#RMSE
+LM_scores_train$RMSE<-c(sqrt(mean(scores$score1)),
+                      sqrt(mean(scores$score2)),
+                      sqrt(mean(scores$score3)))
+
+
+
+## MAE = Mean Absolute Error ----
+#NE MARCHE PAS ENCORE MAIS C'EST LA BONNE LIGNE DE CODE
+# LM_scores_train$MAE <- c(mae(fitted_values_proj$RDA1, Ypredict_lm$Y_final_est1),
+#                        mae(fitted_values_proj$RDA2, Ypredict_lm$Y_final_est2),
+#                        mae(fitted_values_proj$RDA3, Ypredict_lm$Y_final_est3))
 
 
 ###VALID in training set ???
@@ -324,40 +338,18 @@ points(fitted_values_proj[,1:2], col = "red", pch = 19)
 points(Ypredict_lm[, 1:2], col = "blue", pch = 19)  
 
 #Evaluation criteria
-Eval<-data.frame(row.names = c("Axe1","Axe2","Axe3"))
+LM_scores_eval<-data.frame(row.names = c("Axe1","Axe2","Axe3"))
 #RMSE
-Eval$RMSE<-c(sqrt(mean((fitted_values_proj$RDA1 - Ypredict_lm$Y_final_est1)^2)),
+LM_scores_eval$RMSE<-c(sqrt(mean((fitted_values_proj$RDA1 - Ypredict_lm$Y_final_est1)^2)),
              sqrt(mean((fitted_values_proj$RDA2 - Ypredict_lm$Y_final_est2)^2)),
              sqrt(mean((fitted_values_proj$RDA3 - Ypredict_lm$Y_final_est3)^2)))
 
 
 
 ## MAE = Mean Absolute Error ----
-Eval$MAE <- c(mae(fitted_values_proj$RDA1, Ypredict_lm$Y_final_est1),
+LM_scores_eval$MAE <- c(mae(fitted_values_proj$RDA1, Ypredict_lm$Y_final_est1),
               mae(fitted_values_proj$RDA2, Ypredict_lm$Y_final_est2),
               mae(fitted_values_proj$RDA3, Ypredict_lm$Y_final_est3))
-
-
-# r2_1 <- 1 - (score_new1^2)/ (mst (dist_1)) #TEST pour calcul du R²
-r2_1 <- RsquareAdj(y1_est$RDA1, y1_est$y_est, n = 32) #r2 is lower  
-r2_2 <- RsquareAdj(y2_est$RDA2, y2_est$y_est, n = 32)
-r2_3 <- RsquareAdj(y3_est$RDA3, y3_est$y_est, n = 32)
-
-
-
-
-
-#Compare  r² of  3 axes of the RDA
-sum(r2_1)#lower
-sum(r2_2)
-sum(r2_3)
-mean(r2_1)#lower 
-mean(r2_2)
-mean(r2_3)
-
-## SAVING SCORES IN DATAFRAME ----
-
-MC_scores_val <- data.frame(row.names = c("Axe1","Axe2","Axe3"))
 
 
 
@@ -589,7 +581,7 @@ EN_y1_est_eval<- RDA_coordinates %>%
   mutate(y_est, y_est=y_est + as.numeric(final_coefs1['(Intercept)', ])) %>%
   
   #3. Select to have only RDA1, y1_est
-  select(Row.names,RDA1,y_est)
+  select(y_est)
 
 
 #### Y^  Axe 2 ----
@@ -606,7 +598,7 @@ EN_y2_est_eval<- RDA_coordinates %>%
   mutate(y_est, y_est=y_est + as.numeric(final_coefs2['(Intercept)', ])) %>%
   
   #3. Select to have only RDA2, y2_est
-  select(Row.names,RDA2,y_est)
+  select(y_est)
 
 
 #### Y^  Axe 3 ----
@@ -623,7 +615,7 @@ EN_y3_est_eval<- test_final_env %>%
   mutate(y_est, y_est=y_est + as.numeric(final_coefs3['(Intercept)', ])) %>%
   
   #3. Select to have only RDA3, y3_est
-  select(Row.names,RDA3,y_est)
+  select(y_est)
 
 
 
