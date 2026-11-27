@@ -14,13 +14,8 @@ rm(list=ls())
 
 library(tidyverse) # data manipulation
 library(vegan) # RDA
-<<<<<<< HEAD
-library(Metrics)
-library(cv) #cross validation
-=======
 library(Metrics) #rmse, mae
-library(cv)
->>>>>>> origin/main
+library(cv) #cross validation
 library(ape)
 library(glmnet) #linear model
 
