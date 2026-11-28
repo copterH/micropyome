@@ -284,34 +284,39 @@ for (i in 1:B){
   val_fg<-setdiff(RDA_coordinates,train_fg)
   
   ### 4.2.2. Search Grid over alpha ----
+  
   for (j in seq_along(alphas)) {
-    #Linear model with Elastic net
-    #Axe 1
+    
+    # Linear model with Elastic net
+    # Axe 1
     cv_fit1 <- cv.glmnet(as.matrix(train_fg[ , 5:ncol(train_fg)]), 
                         train_fg[ , "RDA1"], 
                         alpha = alphas[j], nfolds = 10)
-    cv_results1$min_cvm[j] <- min(cv_fit1$cvm) #minimum cross validated error for each alpha
+    cv_results1$min_cvm[j] <- min(cv_fit1$cvm) # Minimum cross validated error for each alpha.
     cv_results1$lambda_min[j] <- cv_fit1$lambda.min
     
     
-    #Axe 2
+    # Axe 2
     cv_fit2 <- cv.glmnet(as.matrix(train_fg[ , 5:ncol(train_fg)]), 
                          train_fg[ , "RDA2"], 
                          alpha = alphas[j], nfolds = 10)
-    cv_results2$min_cvm[j] <- min(cv_fit2$cvm) #minimum cross validated error for each alpha
+    cv_results2$min_cvm[j] <- min(cv_fit2$cvm) # Minimum cross validated error for each alpha.
     cv_results2$lambda_min[j] <- cv_fit2$lambda.min 
 
     
-    #Axe 3
+    # Axe 3
     cv_fit3 <- cv.glmnet(as.matrix(train_fg[ , 5:ncol(train_fg)]), 
                          train_fg[ , "RDA3"], 
                          alpha = alphas[j], nfolds = 10)
-    cv_results3$min_cvm[j] <- min(cv_fit3$cvm) #minimum cross validated error for each alpha
+    cv_results3$min_cvm[j] <- min(cv_fit3$cvm) # Minimum cross validated error for each alpha.
     cv_results3$lambda_min[j] <- cv_fit3$lambda.min
     
   }
   
-  #Axe 1
+  
+  ### 4.2.3. Saving best hyperparameters ----
+  
+  # Axe 1
   best_idx1 <- which.min(cv_results1$min_cvm)
   best_alpha1 <- cv_results1$alpha[best_idx1]
   best_lambda1 <- cv_results1$lambda_min[best_idx1]
@@ -320,7 +325,7 @@ for (i in 1:B){
   df_hp1[i,"best_lambda"]<-best_lambda1
   
   
-  #Axe 2
+  # Axe 2
   best_idx2 <- which.min(cv_results2$min_cvm)
   best_alpha2 <- cv_results2$alpha[best_idx2]
   best_lambda2 <- cv_results2$lambda_min[best_idx2]
@@ -329,19 +334,21 @@ for (i in 1:B){
   df_hp2[i,"best_lambda"]<-best_lambda2
   
   
-  #Axe 3
+  # Axe 3
   best_idx3 <- which.min(cv_results3$min_cvm)
   best_alpha3 <- cv_results3$alpha[best_idx3]
   best_lambda3 <- cv_results3$lambda_min[best_idx3]
   
   df_hp3[i,"best_alpha"]<-best_alpha3
   df_hp3[i,"best_lambda"]<-best_lambda3
+  
 }
 
 
-## End Loop ----
+## 4.3. ____End of loop____ ----
 
-### Calcul of the mean alpha and lambda ----
+
+### 4.3.1. Calcul of the mean alpha and lambda ----
 
 summary(df_hp1)
 final_alpha1 <- mean(df_hp1[,"best_alpha"])
@@ -357,14 +364,14 @@ print(sd(df_hp2[,"best_alpha"]))
 final_lambda2 <- mean(df_hp2[,"best_lambda"])
 
 
-summary(df_hp3) #Pb: bcp de valeurs très hautes qui gonflent la moyenne ->  est ce que la médiane serait mieux ?
+summary(df_hp3) # ??? keep the commentar ? #Pb: bcp de valeurs très hautes qui gonflent la moyenne ->  est ce que la médiane serait mieux ?
 final_alpha3 <- mean(df_hp3[,"best_alpha"])
 print(final_alpha3)
 print(sd(df_hp3[,"best_alpha"]))
 final_lambda3 <- mean(df_hp3[,"best_lambda"])
 
 
-#### Return the best models ----
+#### 4.3.2. Return the best models ----
 
 # Axe 1
 EN_lm1 <- cv.glmnet(as.matrix(train_fg[,5:ncol(train_fg)]),
@@ -385,9 +392,9 @@ EN_lm3 <- cv.glmnet(as.matrix(train_fg[,5:ncol(train_fg)]),
 final_coefs3 <- coef(EN_lm3, s = "lambda.min")
 
 
-## Calculation of Y^ ----
+#### 4.3.3. Calculation of Y^ ----
 
-###Y^  Axe 1 ----
+##### Y^  Axe 1 ----
 EN_y1_est_train<- RDA_coordinates %>% 
   
   #1. Multiplication of coefficient * values
@@ -404,7 +411,7 @@ EN_y1_est_train<- RDA_coordinates %>%
   select(Row.names,RDA1,y_est)
 
 
-###Y^  Axe 2 ----
+##### Y^  Axe 2 ----
 EN_y2_est_train<- RDA_coordinates %>% 
   
   #1. Multiplication of coefficient * values
@@ -421,7 +428,7 @@ EN_y2_est_train<- RDA_coordinates %>%
   select(Row.names,RDA2,y_est)
 
 
-###Y^  Axe 3 ----
+##### Y^  Axe 3 ----
 EN_y3_est_train<- RDA_coordinates %>% 
   
   #1. Multiplication of coefficient * values
