@@ -308,7 +308,7 @@ Ypredict_lm <- data.frame('Y_final_est1'=FINAL_lm1_y_predict$y_est,
 fitted_values_proj <- data.frame(predict(RDA, x=test_final_env, y=test_final_fg, type="wa"))
 head(fitted_values_proj)
 head(test_final_fg)
-plot(RDA, display = c("species", "reg"))# inbertia on the axis by variable Y :  fonctionnal group
+plot(RDA, display = c("species", "reg"))# inertia on the axis by variable Y :  fonctionnal group
 plot(RDA, display = c("reg", "sp"))#biplot
 plot(RDA, display = "wa")
 points(fitted_values_proj[,1:2], col = "red", pch = 19)
@@ -361,9 +361,9 @@ for (i in 1:B){
   cv_results3 <- data.frame(alpha = alphas, min_cvm = NA, lambda_min = NA)
   
 
-  # création of 2 groups for training(train) et la validation croisée(val)
+  # création of 2 groups for training(train) and cross validation(val)
   
-  train_fg <- RDA_coordinates %>% sample_frac(2/3) # we take coordonate of  2/3 of training data (96li)
+  train_fg <- RDA_coordinates %>% sample_frac(2/3) # we take coordinate of  2/3 of training data (96li)
   val_fg<-setdiff(RDA_coordinates,train_fg)# 1/3 remaining is used for validation( 32li)
   
   ## Search Grid over alpha -----
@@ -440,7 +440,7 @@ print(sd(df_hp2[,"best_alpha"]))
 final_lambda2 <- mean(df_hp2[,"best_lambda"])
 
 
-summary(df_hp3) #Pb: bcp de valeurs très hautes qui gonflent la moyenne ->  est ce que la médiane serait mieux ?
+summary(df_hp3) #Pb:a lot of very high values that blow up the mean ->  would the median be better ?
 final_alpha3 <- mean(df_hp3[,"best_alpha"])
 print(final_alpha3)
 print(sd(df_hp3[,"best_alpha"]))
