@@ -465,10 +465,17 @@ EN_scores_train$MAE <- c(mae(EN_y1_est_train$RDA1,EN_y1_est_train$y_est),
 
 # 5. FINAL EVALUATION ----
 
-## 5.1. LINEAR MODEL ----
+## 5.1 PROJECTION OF VALIDATION SET ON RDA ----
+
+fitted_values_proj <- data.frame(predict(RDA, x=test_final_env, y=test_final_fg, type="wa"))
+head(fitted_values_proj)
+head(test_final_fg)
 
 
-### 5.1.1. Calculation of Y^ eval ----
+## 5.2. LINEAR MODEL ----
+
+
+### 5.2.1. Calculation of Y^ eval ----
 # Computing the estimated values Y^ of final data (25% of whole dataset)
 
 
@@ -530,7 +537,7 @@ Ypredict_lm <- data.frame('Y_final_est1'=FINAL_lm1_y_predict$y_est,
                           'Y_final_est3'=FINAL_lm3_y_predict$y_est, row.names = row.names(FINAL_lm1_y_predict))
 
 
-### 5.1.2. Evaluation criteria in LM_scores_eval ----
+### 5.2.2. Evaluation criteria in LM_scores_eval ----
 
 LM_scores_eval<-data.frame(row.names = c("Axe1","Axe2","Axe3"))
 
@@ -543,9 +550,9 @@ LM_scores_eval$MAE <- c(mae(fitted_values_proj$RDA1, Ypredict_lm$Y_final_est1),
                         mae(fitted_values_proj$RDA3, Ypredict_lm$Y_final_est3))
 
 
-## 5.2. ELASTICNET ----
+## 5.3. ELASTICNET ----
 
-### 5.2.1. Calculation of Y^ eval ----
+### 5.3.1. Calculation of Y^ eval ----
 
 
 #### Y^  Axe 1
@@ -602,7 +609,7 @@ EN_predict_eval <- data.frame('Y3_final_predict'=EN_y1_est_eval$y_est,
                               'Y2_final_predict'=EN_y2_est_eval$y_est,
                               'Y3_final_predict'=EN_y3_est_eval$y_est, row.names = row.names(EN_y1_est_eval))
 
-### 5.2.2. Evaluation criteria in EN_scores_eval ----
+### 5.3.2. Evaluation criteria in EN_scores_eval ----
 
 EN_scores_eval <- data.frame(row.names = c("Axe1","Axe2","Axe3"))
 
@@ -616,27 +623,44 @@ EN_scores_eval$MAE <- c(mae(fitted_values_proj$RDA1,EN_y1_est_eval$y_est),
 
 
 
-## 5.3. Projection of real and estimated values ----
+## 5.4. PROJECTION OF REAL AND ESTIMATED VALUES ON PLOT ----
 
-fitted_values_proj <- data.frame(predict(RDA, x=test_final_env, y=test_final_fg, type="wa"))
-head(fitted_values_proj)
-head(test_final_fg)
 plot(RDA, display = c("species", "reg"))# inbertia on the axis by variable Y :  fonctionnal group
 plot(RDA, display = c("reg", "sp"))#biplot
 plot(RDA, display = "wa")
 points(fitted_values_proj[,1:2], col = "red", pch = 19)
-
 points(Ypredict_lm[, 1:2], col = "blue", pch = 19)  
 points(EN_predict_eval[, 1:2], col = "chartreuse", pch = 19)  
 
+plot(RDA, choices = c(2,3), display = c("species", "reg"))# inbertia on the axis by variable Y :  fonctionnal group
+plot(RDA, choices = c(2,3), display = c("reg", "sp"))#biplot
+plot(RDA, choices = c(2,3), display = "wa")
+points(fitted_values_proj[,2:3], col = "red", pch = 19)
+points(Ypredict_lm[, 2:3], col = "blue", pch = 19)  
+points(EN_predict_eval[, 2:3], col = "chartreuse", pch = 19)
 
-# 6. Interpretation ----
+plot(RDA, choices = c(1,3), display = c("species", "reg"))# inbertia on the axis by variable Y :  fonctionnal group
+plot(RDA, choices = c(1,3), display = c("reg", "sp"))#biplot
+plot(RDA, choices = c(1,3), display = "wa")
+points(fitted_values_proj[,c(1,3)], col = "red", pch = 19)
+
+points(Ypredict_lm[, c(1,3)], col = "blue", pch = 19)  
+points(EN_predict_eval[, c(1,3)], col = "chartreuse", pch = 19)
+
+
+# 6. INTERPRETATION ----
 
 "Interpretation:
 Linear model (train vs eval):
-
+axe 1 train=eval
+axe 2 train>eval
+axe 3 train >eval 
 
 Elastic net (train vs eval): 
+
+axe 1
+axe 2
+axe 3
 
 Best model between the two:
 
@@ -649,6 +673,7 @@ LM_scores_train
 LM_scores_eval
 EN_scores_train
 EN_scores_eval
+
 "> LM_scores_train
           RMSE       MAE
 Axe1 0.1956822 0.1543046
