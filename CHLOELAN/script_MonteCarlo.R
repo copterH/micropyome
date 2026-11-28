@@ -4,7 +4,8 @@ Machine Learning for Biology Project
 
 "
 
-#PREPARATION DE L'ESPACE DE TRAVAIL----
+# 0. PREPARING WORKSPACE ----
+
 
 # Cleaning environment
 
@@ -12,47 +13,56 @@ rm(list=ls())
 
 # Importing libraries
 
-library(tidyverse) # data manipulation
+library(tidyverse) # Data manipulation
 library(vegan) # RDA
-library(Metrics) #rmse, mae
-library(cv) #cross validation
+library(Metrics) # RMSE, MAE
+library(cv) # Cross validation
 library(ape)
-library(glmnet) #linear model
+library(glmnet) # Linear model
 
 set.seed(123)
 
 
-# IMPORTATION DES DONNEES----
+# 1. DATA SET UP ----
 
-##Functionnal groups----
+
+## 1.1. DATA IMPORTATION ----
+
+### Functionnal groups ----
 file_fg <- data.frame(read_csv("fg_observed_averyll.csv", show_col_types = FALSE))
-row.names(file_fg)<-file_fg[,1]#on renomme les indices par la première colonne
+row.names(file_fg)<-file_fg[,1] # We rename the indices by the first column.
 
-##Environmental parameters----
+### Environmental parameters ----
 file_env<-data.frame(read_csv("13_variables_averyll.csv", show_col_types = FALSE))
 row.names(file_env)<-file_env[,1]
 
 
 
+## 1.2. SELECTION OF A SUBSET FOR THE FINAL EVALUATION ----
 
 
-#SELECTION D'UN SOUS ENSEMBLE POUR L'EVALUATION FINALE----
-test_final_fg<-file_fg %>% sample_frac(.25)#on prend 25% du jeu de donnees pr le test final
-sample_final<-test_final_fg[,1]#nom de l'echantillon = col1 du tab
-fg_observed<-setdiff(file_fg,test_final_fg) #trouve toutes les lignes de file_fg (3/4 restants) qui ne sont pas dans le sous-ensemble de test : pour l'entrainement
+### Functionnal groups ----
+# We extract 25% of the dataset for the final test.
+test_final_fg<-file_fg %>% sample_frac(.25)
+# Name of the sample = 1rst column of the table.
+sample_final<-test_final_fg[,1]
+# Find all the lines from file_fg (the remaining 3/4) which are not in the final
+# evaluation subset, will be used in the train.
+fg_observed<-setdiff(file_fg,test_final_fg)
 
+# IS IT USEFUL TO KEEP ??
+# Checking if the size of fg_observed + test_final_fg is equal to the size of the whole dataset.
 nrow(test_final_fg)*4#le sous-ensemble de test contient 1/4 des donnees du dataset initial n = 19.248
 nrow(test_final_fg)+nrow(fg_observed) == nrow(file_fg)#somme des TRAIN+TEST = nb d'obs du dataset
-# summary(cv(m.auto, k = "loo", method = "naive"))         
- 
+# summary(cv(m.auto, k = "loo", method = "naive"))
 
-##Nettoyage des données----
+# We clean the data
 test_final_fg <- select(test_final_fg,-1)
 fg_observed <- select(fg_observed,-1)
 file_env<-select(file_env,-1)
 
 
-##Sélection du sous ensemble pour les paramètres environnementaux----
+### Environmental parameters ----
 test_final_env<- file_env %>% filter(row.names(file_env) %in% sample_final)
 env_observed<-setdiff(file_env,test_final_env)
 
@@ -61,7 +71,8 @@ env_observed<-setdiff(file_env,test_final_env)
 
 
 
-# RDA : redondancy analysis----
+# RDA ----
+# Redondancy analysis
 RDA <- rda(fg_observed ~ pC + cn + pH + NPP + map + mat + forest + conifer + relEM +P + K + Ca + Mg, 
                          data = env_observed)
 ## Taking the RDA axes ----
