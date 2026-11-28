@@ -269,9 +269,9 @@ for (i in 1:B){
   cv_results3 <- data.frame(alpha = alphas, min_cvm = NA, lambda_min = NA)
   
 
-  # création of 2 groups for training(train) et la validation croisée(val)
+  # création of 2 groups for training(train) and cross validation(val)
   
-  train_fg <- RDA_coordinates %>% sample_frac(2/3) # we take coordonate of  2/3 of training data (96li)
+  train_fg <- RDA_coordinates %>% sample_frac(2/3) # we take coordinate of  2/3 of training data (96li)
   val_fg<-setdiff(RDA_coordinates,train_fg)# 1/3 remaining is used for validation( 32li)
   
   ## Search Grid over alpha -----
@@ -348,7 +348,7 @@ print(sd(df_hp2[,"best_alpha"]))
 final_lambda2 <- mean(df_hp2[,"best_lambda"])
 
 
-summary(df_hp3) #Pb: bcp de valeurs très hautes qui gonflent la moyenne ->  est ce que la médiane serait mieux ?
+summary(df_hp3) #Pb:a lot of very high values that blow up the mean ->  would the median be better ?
 final_alpha3 <- mean(df_hp3[,"best_alpha"])
 print(final_alpha3)
 print(sd(df_hp3[,"best_alpha"]))
@@ -609,6 +609,102 @@ points(fitted_values_proj[,1:2], col = "red", pch = 19)
 
 points(Ypredict_lm[, 1:2], col = "blue", pch = 19)  
 points(EN_predict_eval[, 1:2], col = "chartreuse", pch = 19)  
+
+
+
+
+# FINAL EVALUATION ----
+
+##Computing the estimated values Y^ of final data (25% of whole dataset) ----
+
+### LINEAR MODEL ----
+
+####Y^  Axe 1 ----
+
+FINAL_lm1_y_predict<- test_final_env %>% 
+  
+  #1. Multiplication of coefficient * values
+  mutate(
+    across( #across : apply function to multiple columns
+      all_of(cols), #were to apply it
+      ~ .x * as.numeric(LM1_final['LM1',cur_column()]))) %>% #which function. Here multiply the column by the coefficient factor
+  
+  #2. Sum of coefficient and add intercept
+  mutate(y_est=rowSums(across(all_of(cols)))) %>%
+  mutate(y_est, y_est=y_est + as.numeric(LM1_final['LM1','Intercept'])) %>%
+  
+  #3. Select to have only y1_est
+  select(y_est)
+
+####Y^  Axe 2 ----
+
+FINAL_lm2_y_predict<- test_final_env %>% 
+  
+  #1. Multiplication of coefficient * values
+  mutate(
+    across( #across : apply function to multiple columns
+      all_of(cols), #were to apply it
+      ~ .x * as.numeric(LM2_final['LM2',cur_column()]))) %>% #which function. Here multiply the column by the coefficient factor
+  
+  #2. Sum of coefficient and add intercept
+  mutate(y_est=rowSums(across(all_of(cols)))) %>%
+  mutate(y_est, y_est=y_est + as.numeric(LM2_final['LM2','Intercept'])) %>%
+  
+  #3. Select to have only y2_est
+  select(y_est)
+
+
+####Y^  Axe 3 ----
+
+FINAL_lm3_y_predict<- test_final_env %>% 
+  
+  #1. Multiplication of coefficient * values
+  mutate(
+    across( #across : apply function to multiple columns
+      all_of(cols), #were to apply it
+      ~ .x * as.numeric(LM3_final['LM3',cur_column()]))) %>% #which function. Here multiply the column by the coefficient factor
+  
+  #2. Sum of coefficient and add intercept
+  mutate(y_est=rowSums(across(all_of(cols)))) %>%
+  mutate(y_est, y_est=y_est + as.numeric(LM3_final['LM3','Intercept'])) %>%
+  
+  #3. Select to have only y2_est
+  select(y_est)
+
+Ypredict_lm <- data.frame('Y_final_est1'=FINAL_lm1_y_predict$y_est, 
+                          'Y_final_est2'=FINAL_lm2_y_predict$y_est,
+                          'Y_final_est3'=FINAL_lm3_y_predict$y_est, row.names = row.names(FINAL_lm1_y_predict))
+
+
+
+## Projection of real and estimated values ----
+
+fitted_values_proj <- data.frame(predict(RDA, x=test_final_env, y=test_final_fg, type="wa"))
+head(fitted_values_proj)
+head(test_final_fg)
+plot(RDA, display = c("species", "reg"))# inertia on the axis by variable Y :  fonctionnal group
+plot(RDA, display = c("reg", "sp"))#biplot
+plot(RDA, display = "wa")
+points(fitted_values_proj[,1:2], col = "red", pch = 19)
+
+points(Ypredict_lm[, 1:2], col = "blue", pch = 19)  
+points(EN_predict_eval[, 1:2], col = "chartreuse", pch = 19)  
+
+#Evaluation criteria
+LM_scores_eval<-data.frame(row.names = c("Axe1","Axe2","Axe3"))
+#RMSE
+LM_scores_eval$RMSE<-c(sqrt(mean((fitted_values_proj$RDA1 - Ypredict_lm$Y_final_est1)^2)),
+                       sqrt(mean((fitted_values_proj$RDA2 - Ypredict_lm$Y_final_est2)^2)),
+                       sqrt(mean((fitted_values_proj$RDA3 - Ypredict_lm$Y_final_est3)^2)))
+
+
+
+## MAE = Mean Absolute Error ----
+LM_scores_eval$MAE <- c(mae(fitted_values_proj$RDA1, Ypredict_lm$Y_final_est1),
+                        mae(fitted_values_proj$RDA2, Ypredict_lm$Y_final_est2),
+                        mae(fitted_values_proj$RDA3, Ypredict_lm$Y_final_est3))
+
+
 
 
 "Interpretation:
