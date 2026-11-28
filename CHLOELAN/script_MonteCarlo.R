@@ -24,7 +24,7 @@ library(cv) # Cross validation
 library(ape)
 library(glmnet) # Linear model
 
-set.seed(12)
+set.seed(123)
 
 
 
@@ -684,11 +684,17 @@ head(fitted_values_proj)
 head(test_final_fg)
 plot(RDA, display = c("species", "reg"))# inertia on the axis by variable Y :  fonctionnal group
 plot(RDA, display = c("reg", "sp"))#biplot
+
+
 plot(RDA, display = "wa")
 points(fitted_values_proj[,1:2], col = "red", pch = 19)
-
 points(Ypredict_lm[, 1:2], col = "blue", pch = 19)  
 points(EN_predict_eval[, 1:2], col = "chartreuse", pch = 19)  
+
+
+
+
+
 
 #Evaluation criteria
 LM_scores_eval<-data.frame(row.names = c("Axe1","Axe2","Axe3"))
@@ -724,3 +730,23 @@ LM_scores_train
 LM_scores_eval
 EN_scores_train
 EN_scores_eval
+"> LM_scores_train
+          RMSE       MAE
+Axe1 0.1956822 0.1543046
+Axe2 0.5471387 0.3405952
+Axe3 0.4938292 0.3544879
+> LM_scores_eval
+          RMSE       MAE
+Axe1 0.1962637 0.1576977
+Axe2 0.3404107 0.2407355
+Axe3 0.2993943 0.2289791
+> EN_scores_train
+          RMSE       MAE
+Axe1 0.1683120 0.1355889
+Axe2 0.4396053 0.2455159
+Axe3 0.3896356 0.2879509
+> EN_scores_eval
+          RMSE       MAE
+Axe1 0.1798440 0.1464854
+Axe2 0.2415496 0.1342493
+Axe3 0.2770091 0.2170606"
