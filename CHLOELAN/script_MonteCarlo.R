@@ -364,6 +364,7 @@ print(sd(df_hp2[,"best_alpha"]))
 final_lambda2 <- mean(df_hp2[,"best_lambda"])
 
 
+
 summary(df_hp3) # ??? keep the commentar ? #Pb: bcp de valeurs très hautes qui gonflent la moyenne ->  est ce que la médiane serait mieux ?
 final_alpha3 <- mean(df_hp3[,"best_alpha"])
 print(final_alpha3)
@@ -460,6 +461,87 @@ EN_scores_train$MAE <- c(mae(EN_y1_est_train$RDA1,EN_y1_est_train$y_est),
 
 
 
+
+
+
+
+# FINAL EVALUATION ----
+
+##Computing the estimated values Y^ of final data (25% of whole dataset) ----
+
+### LINEAR MODEL ----
+
+####Y^  Axe 1 ----
+
+FINAL_lm1_y_predict<- test_final_env %>% 
+  
+  #1. Multiplication of coefficient * values
+  mutate(
+    across( #across : apply function to multiple columns
+      all_of(cols), #were to apply it
+      ~ .x * as.numeric(LM1_final['LM1',cur_column()]))) %>% #which function. Here multiply the column by the coefficient factor
+  
+  #2. Sum of coefficient and add intercept
+  mutate(y_est=rowSums(across(all_of(cols)))) %>%
+  mutate(y_est, y_est=y_est + as.numeric(LM1_final['LM1','Intercept'])) %>%
+  
+  #3. Select to have only y1_est
+  select(y_est)
+
+####Y^  Axe 2 ----
+
+FINAL_lm2_y_predict<- test_final_env %>% 
+  
+  #1. Multiplication of coefficient * values
+  mutate(
+    across( #across : apply function to multiple columns
+      all_of(cols), #were to apply it
+      ~ .x * as.numeric(LM2_final['LM2',cur_column()]))) %>% #which function. Here multiply the column by the coefficient factor
+  
+  #2. Sum of coefficient and add intercept
+  mutate(y_est=rowSums(across(all_of(cols)))) %>%
+  mutate(y_est, y_est=y_est + as.numeric(LM2_final['LM2','Intercept'])) %>%
+  
+  #3. Select to have only y2_est
+  select(y_est)
+
+
+####Y^  Axe 3 ----
+
+FINAL_lm3_y_predict<- test_final_env %>% 
+  
+  #1. Multiplication of coefficient * values
+  mutate(
+    across( #across : apply function to multiple columns
+      all_of(cols), #were to apply it
+      ~ .x * as.numeric(LM3_final['LM3',cur_column()]))) %>% #which function. Here multiply the column by the coefficient factor
+  
+  #2. Sum of coefficient and add intercept
+  mutate(y_est=rowSums(across(all_of(cols)))) %>%
+  mutate(y_est, y_est=y_est + as.numeric(LM3_final['LM3','Intercept'])) %>%
+  
+  #3. Select to have only y2_est
+  select(y_est)
+
+Ypredict_lm <- data.frame('Y_final_est1'=FINAL_lm1_y_predict$y_est, 
+                          'Y_final_est2'=FINAL_lm2_y_predict$y_est,
+                          'Y_final_est3'=FINAL_lm3_y_predict$y_est, row.names = row.names(FINAL_lm1_y_predict))
+#Evaluation criteria
+LM_scores_eval<-data.frame(row.names = c("Axe1","Axe2","Axe3"))
+#RMSE
+LM_scores_eval$RMSE<-c(sqrt(mean((fitted_values_proj$RDA1 - Ypredict_lm$Y_final_est1)^2)),
+                       sqrt(mean((fitted_values_proj$RDA2 - Ypredict_lm$Y_final_est2)^2)),
+                       sqrt(mean((fitted_values_proj$RDA3 - Ypredict_lm$Y_final_est3)^2)))
+
+
+
+## MAE = Mean Absolute Error ----
+LM_scores_eval$MAE <- c(mae(fitted_values_proj$RDA1, Ypredict_lm$Y_final_est1),
+                        mae(fitted_values_proj$RDA2, Ypredict_lm$Y_final_est2),
+                        mae(fitted_values_proj$RDA3, Ypredict_lm$Y_final_est3))
+
+
+
 ## FINAL EVALUATION OF EN ----
 
 ### Calculation of Y^ eval ----
@@ -522,15 +604,28 @@ EN_predict_eval <- data.frame('Y3_final_predict'=EN_y1_est_eval$y_est,
 
 EN_scores_eval <- data.frame(row.names = c("Axe1","Axe2","Axe3"))
 
-EN_scores_eval$RMSE <- c(sqrt(mean((EN_y1_est_eval$RDA1 - EN_y1_est_eval$y_est)^2)),
-                          sqrt(mean((EN_y2_est_eval$RDA2 - EN_y2_est_eval$y_est)^2)),
-                          sqrt(mean((EN_y3_est_eval$RDA3 - EN_y3_est_eval$y_est)^2)))
+EN_scores_eval$RMSE <- c(sqrt(mean((fitted_values_proj$RDA1 - EN_y1_est_eval$y_est)^2)),
+                         sqrt(mean((fitted_values_proj$RDA2 - EN_y2_est_eval$y_est)^2)),
+                         sqrt(mean((fitted_values_proj$RDA3 - EN_y3_est_eval$y_est)^2)))
 
-EN_scores_eval$MAE <- c(mae(EN_y1_est_eval$RDA1,EN_y1_est_eval$y_est),
-                         mae(EN_y2_est_eval$RDA2, EN_y2_est_eval$y_est),
-                         mae(EN_y3_est_eval$RDA3, EN_y3_est_eval$y_est))
+EN_scores_eval$MAE <- c(mae(fitted_values_proj$RDA1,EN_y1_est_eval$y_est),
+                        mae(fitted_values_proj$RDA2, EN_y2_est_eval$y_est),
+                        mae(fitted_values_proj$RDA3, EN_y3_est_eval$y_est))
 
 
+
+## Projection of real and estimated values ----
+
+fitted_values_proj <- data.frame(predict(RDA, x=test_final_env, y=test_final_fg, type="wa"))
+head(fitted_values_proj)
+head(test_final_fg)
+plot(RDA, display = c("species", "reg"))# inbertia on the axis by variable Y :  fonctionnal group
+plot(RDA, display = c("reg", "sp"))#biplot
+plot(RDA, display = "wa")
+points(fitted_values_proj[,1:2], col = "red", pch = 19)
+
+points(Ypredict_lm[, 1:2], col = "blue", pch = 19)  
+points(EN_predict_eval[, 1:2], col = "chartreuse", pch = 19)  
 
 
 
@@ -604,7 +699,7 @@ Ypredict_lm <- data.frame('Y_final_est1'=FINAL_lm1_y_predict$y_est,
 fitted_values_proj <- data.frame(predict(RDA, x=test_final_env, y=test_final_fg, type="wa"))
 head(fitted_values_proj)
 head(test_final_fg)
-plot(RDA, display = c("species", "reg"))# inbertia on the axis by variable Y :  fonctionnal group
+plot(RDA, display = c("species", "reg"))# inertia on the axis by variable Y :  fonctionnal group
 plot(RDA, display = c("reg", "sp"))#biplot
 plot(RDA, display = "wa")
 points(fitted_values_proj[,1:2], col = "red", pch = 19)
@@ -627,12 +722,13 @@ LM_scores_eval$MAE <- c(mae(fitted_values_proj$RDA1, Ypredict_lm$Y_final_est1),
                         mae(fitted_values_proj$RDA3, Ypredict_lm$Y_final_est3))
 
 
+
+
 "Interpretation:
 Linear model (train vs eval):
 
 
-Elastic net (train vs eval):
-
+Elastic net (train vs eval): 
 
 Best model between the two:
 
@@ -641,4 +737,7 @@ Biological interpretation:
 
 
 "
-
+LM_scores_train
+LM_scores_eval
+EN_scores_train
+EN_scores_eval
