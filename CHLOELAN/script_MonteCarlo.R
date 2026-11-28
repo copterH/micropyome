@@ -113,10 +113,10 @@ cols<-intersect(names(RDA_coordinates), names(env_observed)) # select all factor
 
 
 
-# 3. MONTE CARLO ----
+# 3. LINEAR MODEL ----
 
 
-## 3.1. Initialisation ----
+## 3.1. Initialization out of loop ----
 
 B <- 100 # Number of iterations for the loop
 
@@ -142,13 +142,15 @@ for (i in 1:B){
   
   ### 3.2.1. Initialization ----
   
-  # Creation of 2 groups for training (train) and cross validation (val)
+  # Creation of 2 groups for training (train) and cross validation (val).
   
-  train_fg <- RDA_coordinates %>% sample_frac(2/3) # We take coordinates of 2/3 of training data
-  val_fg<-setdiff(RDA_coordinates,train_fg) # The remaining 1/3 is used for validation.
+  # We keep the coordinates of 2/3 of the training data.
+  train_fg <- RDA_coordinates %>% sample_frac(2/3)
+  # The remaining 1/3 is used for validation.
+  val_fg <- setdiff(RDA_coordinates,train_fg)
   
   
-  ### 3.2.2. Linear model -----
+  ### 3.2.2. Linear model ----
   
   # Axe 1
   linear_model1<-lm( RDA1 ~ pC + cn + pH + NPP + map + mat + forest + conifer +
@@ -162,17 +164,17 @@ for (i in 1:B){
   
   ### 3.2.3. Validation ----
   
-  #Y^  Axe 1
+  # Y^  Axe 1
   y1_est<-predict (linear_model1, newdata = val_fg)
   
-  #Y^  Axe 2
+  # Y^  Axe 2
   y2_est<-predict (linear_model2, newdata = val_fg)
   
-  #Y^  Axe 3
+  # Y^  Axe 3
   y3_est<-predict (linear_model3, newdata = val_fg)
   
   
-  ### 3.2.4. Calculating and saving scores ----
+  ### 3.2.4. Evaluation criteria ----
   
   #### MSE ----
   
@@ -197,52 +199,55 @@ for (i in 1:B){
 }
 
 
-## ____End of loop____ ----
+## 3.3. ____End of loop____ ----
 
-#Proposition: list "cols" corresponds exactly at this vector 
 colnames(full_lm1) <- c("Intercept", "pC", "cn", "pH", "NPP", "map", "mat", "forest", "conifer",
                         "relEM", "P", "K", "Ca", "Mg")
 colnames(full_lm2) <- c("Intercept", "pC", "cn", "pH", "NPP", "map", "mat", "forest", "conifer",
                         "relEM", "P", "K", "Ca", "Mg")
 colnames(full_lm3) <- c("Intercept", "pC", "cn", "pH", "NPP", "map", "mat", "forest", "conifer",
                         "relEM", "P", "K", "Ca", "Mg")
+
 colnames(LM_MSE) <- c("MSE1", "MSE2", "MSE3")
 colnames(LM_MAE) <- c("MAE1", "MAE2", "MAE3")
-
 
 head(full_lm1)
 head(full_lm2)
 head(full_lm3)
 
 head(LM_MSE)
+head(LM_MAE)
 
-# FINAL MEAN LINEAIRE MODEL   ----
+
+### 3.3.1. Final mean Linear Model ----
+
+# Creation of the final model : its coefficients are the mean of coefficients of each model.
 LM1_final<- data.frame('LM1'=rapply (full_lm1, mean)) %>% t()
 LM2_final<- data.frame('LM2'=rapply (full_lm2, mean)) %>% t()
 LM3_final<- data.frame('LM3'=rapply (full_lm3, mean)) %>% t()
 
-#Creation of the final model : Mean of all coefficient.
 
-#Evaluation criteria
+
+### 3.3.2. Evaluation criteria in LM_scores_train ----
+
 LM_scores_train<-data.frame(row.names = c("Axe1","Axe2","Axe3"))
-#RMSE
+
 LM_scores_train$RMSE<-c(sqrt(mean(LM_MSE$MSE1)),
                         sqrt(mean(LM_MSE$MSE2)),
                         sqrt(mean(LM_MSE$MSE3)))
-
-
-
-## MAE = Mean Absolute Error ----
 
 LM_scores_train$MAE <- c(mean(LM_MAE$MAE1),
                          mean(LM_MAE$MAE2),
                          mean(LM_MAE$MAE3))
 
 
-# MC WITH ELASTICNET ----
 
 
 
+# 4. ELASTICNET ----
+
+
+## 4.1. Initialization out of loop ----
 
 n <- matrix(ncol = 0, nrow = 3)
 scores <- data.frame(n)
@@ -258,51 +263,60 @@ df_hp3 <- data.frame(best_alpha = NA, best_lambda = NA)
 
 B<-100
 
+## 4.2. ____Loop____ ----
+
 for (i in 1:B){
   print(paste0(i,"/100"))
   
-  ## Initialisation ----
+  ### 4.2.1. Initialization ----
   
-  #For choosing best parameters later
+  # For choosing best parameters later.
   cv_results1 <- data.frame(alpha = alphas, min_cvm = NA, lambda_min = NA)
   cv_results2 <- data.frame(alpha = alphas, min_cvm = NA, lambda_min = NA)
   cv_results3 <- data.frame(alpha = alphas, min_cvm = NA, lambda_min = NA)
   
 
-  # création of 2 groups for training(train) and cross validation(val)
+  # Creation of 2 groups for training (train) and cross validation (val).
   
-  train_fg <- RDA_coordinates %>% sample_frac(2/3) # we take coordinate of  2/3 of training data (96li)
-  val_fg<-setdiff(RDA_coordinates,train_fg)# 1/3 remaining is used for validation( 32li)
+  # We keep the coordinates of 2/3 of the training data.
+  train_fg <- RDA_coordinates %>% sample_frac(2/3)
+  # The remaining 1/3 is used for validation.
+  val_fg<-setdiff(RDA_coordinates,train_fg)
   
-  ## Search Grid over alpha -----
+  ### 4.2.2. Search Grid over alpha ----
+  
   for (j in seq_along(alphas)) {
-    #Linear model with Elastic net
-    #Axe 1
+    
+    # Linear model with Elastic net
+    # Axe 1
     cv_fit1 <- cv.glmnet(as.matrix(train_fg[ , 5:ncol(train_fg)]), 
                         train_fg[ , "RDA1"], 
                         alpha = alphas[j], nfolds = 10)
-    cv_results1$min_cvm[j] <- min(cv_fit1$cvm) #minimum cross validated error for each alpha
+    cv_results1$min_cvm[j] <- min(cv_fit1$cvm) # Minimum cross validated error for each alpha.
     cv_results1$lambda_min[j] <- cv_fit1$lambda.min
     
     
-    #Axe 2
+    # Axe 2
     cv_fit2 <- cv.glmnet(as.matrix(train_fg[ , 5:ncol(train_fg)]), 
                          train_fg[ , "RDA2"], 
                          alpha = alphas[j], nfolds = 10)
-    cv_results2$min_cvm[j] <- min(cv_fit2$cvm) #minimum cross validated error for each alpha
+    cv_results2$min_cvm[j] <- min(cv_fit2$cvm) # Minimum cross validated error for each alpha.
     cv_results2$lambda_min[j] <- cv_fit2$lambda.min 
 
     
-    #Axe 3
+    # Axe 3
     cv_fit3 <- cv.glmnet(as.matrix(train_fg[ , 5:ncol(train_fg)]), 
                          train_fg[ , "RDA3"], 
                          alpha = alphas[j], nfolds = 10)
-    cv_results3$min_cvm[j] <- min(cv_fit3$cvm) #minimum cross validated error for each alpha
+    cv_results3$min_cvm[j] <- min(cv_fit3$cvm) # Minimum cross validated error for each alpha.
     cv_results3$lambda_min[j] <- cv_fit3$lambda.min
     
   }
   
-  #Axe 1
+  
+  ### 4.2.3. Saving best hyperparameters ----
+  
+  # Axe 1
   best_idx1 <- which.min(cv_results1$min_cvm)
   best_alpha1 <- cv_results1$alpha[best_idx1]
   best_lambda1 <- cv_results1$lambda_min[best_idx1]
@@ -311,7 +325,7 @@ for (i in 1:B){
   df_hp1[i,"best_lambda"]<-best_lambda1
   
   
-  #Axe 2
+  # Axe 2
   best_idx2 <- which.min(cv_results2$min_cvm)
   best_alpha2 <- cv_results2$alpha[best_idx2]
   best_lambda2 <- cv_results2$lambda_min[best_idx2]
@@ -320,19 +334,21 @@ for (i in 1:B){
   df_hp2[i,"best_lambda"]<-best_lambda2
   
   
-  #Axe 3
+  # Axe 3
   best_idx3 <- which.min(cv_results3$min_cvm)
   best_alpha3 <- cv_results3$alpha[best_idx3]
   best_lambda3 <- cv_results3$lambda_min[best_idx3]
   
   df_hp3[i,"best_alpha"]<-best_alpha3
   df_hp3[i,"best_lambda"]<-best_lambda3
+  
 }
 
 
-## End Loop ----
+## 4.3. ____End of loop____ ----
 
-### Calcul of the mean alpha and lambda ----
+
+### 4.3.1. Calcul of the mean alpha and lambda ----
 
 summary(df_hp1)
 final_alpha1 <- mean(df_hp1[,"best_alpha"])
@@ -348,14 +364,15 @@ print(sd(df_hp2[,"best_alpha"]))
 final_lambda2 <- mean(df_hp2[,"best_lambda"])
 
 
-summary(df_hp3) #Pb:a lot of very high values that blow up the mean ->  would the median be better ?
+
+summary(df_hp3) # ??? keep the commentar ? #Pb: bcp de valeurs très hautes qui gonflent la moyenne ->  est ce que la médiane serait mieux ?
 final_alpha3 <- mean(df_hp3[,"best_alpha"])
 print(final_alpha3)
 print(sd(df_hp3[,"best_alpha"]))
 final_lambda3 <- mean(df_hp3[,"best_lambda"])
 
 
-#### Return the best models ----
+#### 4.3.2. Return the best models ----
 
 # Axe 1
 EN_lm1 <- cv.glmnet(as.matrix(train_fg[,5:ncol(train_fg)]),
@@ -376,9 +393,9 @@ EN_lm3 <- cv.glmnet(as.matrix(train_fg[,5:ncol(train_fg)]),
 final_coefs3 <- coef(EN_lm3, s = "lambda.min")
 
 
-## Calculation of Y^ ----
+#### 4.3.3. Calculation of Y^ ----
 
-###Y^  Axe 1 ----
+##### Y^  Axe 1 ----
 EN_y1_est_train<- RDA_coordinates %>% 
   
   #1. Multiplication of coefficient * values
@@ -395,7 +412,7 @@ EN_y1_est_train<- RDA_coordinates %>%
   select(Row.names,RDA1,y_est)
 
 
-###Y^  Axe 2 ----
+##### Y^  Axe 2 ----
 EN_y2_est_train<- RDA_coordinates %>% 
   
   #1. Multiplication of coefficient * values
@@ -412,7 +429,7 @@ EN_y2_est_train<- RDA_coordinates %>%
   select(Row.names,RDA2,y_est)
 
 
-###Y^  Axe 3 ----
+##### Y^  Axe 3 ----
 EN_y3_est_train<- RDA_coordinates %>% 
   
   #1. Multiplication of coefficient * values
