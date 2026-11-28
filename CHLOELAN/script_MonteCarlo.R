@@ -113,7 +113,7 @@ cols<-intersect(names(RDA_coordinates), names(env_observed)) # select all factor
 
 
 
-# 3. MONTE CARLO ----
+# 3. LINEAR MODEL ----
 
 
 ## 3.1. Initialisation ----
@@ -197,49 +197,51 @@ for (i in 1:B){
 }
 
 
-## ____End of loop____ ----
+## 3.3. ____End of loop____ ----
 
-#Proposition: list "cols" corresponds exactly at this vector 
 colnames(full_lm1) <- c("Intercept", "pC", "cn", "pH", "NPP", "map", "mat", "forest", "conifer",
                         "relEM", "P", "K", "Ca", "Mg")
 colnames(full_lm2) <- c("Intercept", "pC", "cn", "pH", "NPP", "map", "mat", "forest", "conifer",
                         "relEM", "P", "K", "Ca", "Mg")
 colnames(full_lm3) <- c("Intercept", "pC", "cn", "pH", "NPP", "map", "mat", "forest", "conifer",
                         "relEM", "P", "K", "Ca", "Mg")
+
 colnames(LM_MSE) <- c("MSE1", "MSE2", "MSE3")
 colnames(LM_MAE) <- c("MAE1", "MAE2", "MAE3")
-
 
 head(full_lm1)
 head(full_lm2)
 head(full_lm3)
 
 head(LM_MSE)
+head(LM_MAE)
 
-# FINAL MEAN LINEAIRE MODEL   ----
+
+### 3.3.1. Final mean Linear Model ----
+
+# Creation of the final model : its coefficients are the mean of coefficients of each model.
 LM1_final<- data.frame('LM1'=rapply (full_lm1, mean)) %>% t()
 LM2_final<- data.frame('LM2'=rapply (full_lm2, mean)) %>% t()
 LM3_final<- data.frame('LM3'=rapply (full_lm3, mean)) %>% t()
 
-#Creation of the final model : Mean of all coefficient.
 
-#Evaluation criteria
+
+### 3.3.2. Evaluation criteria ----
+
 LM_scores_train<-data.frame(row.names = c("Axe1","Axe2","Axe3"))
-#RMSE
+
+#### RMSE ----
 LM_scores_train$RMSE<-c(sqrt(mean(LM_MSE$MSE1)),
                         sqrt(mean(LM_MSE$MSE2)),
                         sqrt(mean(LM_MSE$MSE3)))
 
-
-
-## MAE = Mean Absolute Error ----
-
+#### MAE ----
 LM_scores_train$MAE <- c(mean(LM_MAE$MAE1),
                          mean(LM_MAE$MAE2),
                          mean(LM_MAE$MAE3))
 
 
-# MC WITH ELASTICNET ----
+# 4. ELASTICNET ----
 
 
 
