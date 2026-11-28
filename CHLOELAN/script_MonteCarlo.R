@@ -4,7 +4,12 @@ Machine Learning for Biology Project
 
 "
 
-#PREPARATION DE L'ESPACE DE TRAVAIL----
+
+
+
+
+# 0. PREPARING WORKSPACE ----
+
 
 # Cleaning environment
 
@@ -12,47 +17,51 @@ rm(list=ls())
 
 # Importing libraries
 
-library(tidyverse) # data manipulation
+library(tidyverse) # Data manipulation
 library(vegan) # RDA
-library(Metrics) #rmse, mae
-library(cv) #cross validation
+library(Metrics) # RMSE, MAE
+library(cv) # Cross validation
 library(ape)
-library(glmnet) #linear model
+library(glmnet) # Linear model
 
 set.seed(12)
 
 
-# IMPORTATION DES DONNEES----
 
-##Functionnal groups----
+
+
+# 1. DATA SET UP ----
+
+
+## 1.1. DATA IMPORTATION ----
+
+### Functionnal groups ----
 file_fg <- data.frame(read_csv("fg_observed_averyll.csv", show_col_types = FALSE))
-row.names(file_fg)<-file_fg[,1]#on renomme les indices par la première colonne
+row.names(file_fg)<-file_fg[,1] # We rename the indices by the first column.
 
-##Environmental parameters----
+### Environmental parameters ----
 file_env<-data.frame(read_csv("13_variables_averyll.csv", show_col_types = FALSE))
 row.names(file_env)<-file_env[,1]
 
 
+## 1.2. SELECTION OF A SUBSET FOR THE FINAL EVALUATION ----
 
+### Functionnal groups ----
+# We extract 25% of the dataset for the final test.
+test_final_fg<-file_fg %>% sample_frac(.25)
+# Name of the sample = 1rst column of the table.
+sample_final<-test_final_fg[,1]
+# Find all the lines from file_fg (the remaining 3/4) which are not in the final
+# evaluation subset, will be used in the train.
+fg_observed<-setdiff(file_fg,test_final_fg)
 
-
-#SELECTION D'UN SOUS ENSEMBLE POUR L'EVALUATION FINALE----
-test_final_fg<-file_fg %>% sample_frac(.25)#on prend 25% du jeu de donnees pr le test final
-sample_final<-test_final_fg[,1]#nom de l'echantillon = col1 du tab
-fg_observed<-setdiff(file_fg,test_final_fg) #trouve toutes les lignes de file_fg (3/4 restants) qui ne sont pas dans le sous-ensemble de test : pour l'entrainement
-
-nrow(test_final_fg)*4#le sous-ensemble de test contient 1/4 des donnees du dataset initial n = 19.248
-nrow(test_final_fg)+nrow(fg_observed) == nrow(file_fg)#somme des TRAIN+TEST = nb d'obs du dataset
-# summary(cv(m.auto, k = "loo", method = "naive"))         
- 
-
-##Nettoyage des données----
+# We clean the data by removing the first column repeating the site names.
 test_final_fg <- select(test_final_fg,-1)
 fg_observed <- select(fg_observed,-1)
 file_env<-select(file_env,-1)
 
 
-##Sélection du sous ensemble pour les paramètres environnementaux----
+### Environmental parameters ----
 test_final_env<- file_env %>% filter(row.names(file_env) %in% sample_final)
 env_observed<-setdiff(file_env,test_final_env)
 
@@ -60,20 +69,28 @@ env_observed<-setdiff(file_env,test_final_env)
 
 
 
+# 2. RDA ----
+# Redondancy analysis
 
-# RDA : redondancy analysis----
-RDA <- rda(fg_observed ~ pC + cn + pH + NPP + map + mat + forest + conifer + relEM +P + K + Ca + Mg, 
+RDA <- rda(fg_observed ~ pC + cn + pH + NPP + map + mat + forest +
+                         conifer + relEM +P + K + Ca + Mg, 
                          data = env_observed)
-## Taking the RDA axes ----
 
-test<-RDA$CCA$u[,1:3] #extrait les coordonnees de la RDA
 
+## 2.1. Extracting the RDA axes ----
+
+test<-RDA$CCA$u[,1:3] # Extract the RDA coordinates.
+
+
+# ???
 #display = sites or  species (functionnal groups)
 #choices= axis
 #scaling ="none", "sites", "species", or "symmetric", which correspond to the values 0, 1, 2, and 3 respectively
-RDA_coordinates<-scores(RDA, display = "sites", choices = 1:3, scaling = 2)#sp?
+
+RDA_coordinates<-scores(RDA, display = "sites", choices = 1:3, scaling = 2) # sp? ???
 RDA_coordinates
 
+### Visualisation of the RDA ----
 
 scores(RDA, display = "sites", choices = 1:3, scaling = "sp") # find same result as the previous line : score on the sample axis : 
 scores(RDA, display = "species", choices = 1:3, scaling = 3) # inertia on the axis by variable Y : functionnal group 
@@ -82,65 +99,68 @@ plot(RDA, display = c("reg", "sp")) # biplot
 plot(RDA, display = "wa") # points
 # plot(RDA, display = "cn") # var X
 
-##Merging with environemental variables ----
+
+## 2.2. Merging with environemental variables ----
 
 RDA_coordinates<-data.frame(merge(RDA_coordinates,env_observed,by=0))%>% as.data.frame()
-
+# ??? as.data.frame() utile ?
 
 # Taking the variables names 
-cols<-intersect(names(RDA_coordinates), names(env_observed)) #select all factors coefficients
+
+cols<-intersect(names(RDA_coordinates), names(env_observed)) # select all factors coefficients
 
 
 
 
 
+# 3. MONTE CARLO ----
 
 
-# MONTE CARLO ----
+## 3.1. Initialisation ----
 
-## Initialisation ----
 B <- 100 # Number of iterations for the loop
 
-# empty dataframe for saving all the lm inside the loop
+# Empty dataframe for saving all the LM inside the loop
 
 m <- matrix(ncol = 0, nrow = B)
 full_lm1 <- data.frame(m)
 full_lm2 <- data.frame(m)
 full_lm3 <- data.frame(m)
 
-# create a dataframe registering les MSE for each tested model
+# Empty dataframe for saving the MSE and MAE for each tested model
 
 n <- matrix(ncol=0, nrow=3)
-scores <- data.frame(n)
+LM_MSE <- data.frame(n)
 LM_MAE <- data.frame(n)
 
 
-## ____Loop____ ----
+## 3.2. ____Loop____ ----
 
 for (i in 1:B){
   
   print(paste0(i,"/100"))
-  ## Initialisation ----
   
-  # creation of 2 groups for trainig(train) and cross validation(val)
+  ### 3.2.1. Initialization ----
   
-  train_fg <- RDA_coordinates %>% sample_frac(2/3) #we take coordinates of  2/3 of training data (96li)
-  val_fg<-setdiff(RDA_coordinates,train_fg)# 1/3 remaining is used for validation(32li)
+  # Creation of 2 groups for training (train) and cross validation (val)
+  
+  train_fg <- RDA_coordinates %>% sample_frac(2/3) # We take coordinates of 2/3 of training data
+  val_fg<-setdiff(RDA_coordinates,train_fg) # The remaining 1/3 is used for validation.
   
   
-  ## Linear model -----
+  ### 3.2.2. Linear model -----
   
-  #Axe 1
+  # Axe 1
   linear_model1<-lm( RDA1 ~ pC + cn + pH + NPP + map + mat + forest + conifer +
                        relEM +P + K + Ca + Mg, data=train_fg)
-  #Axe 2
+  # Axe 2
   linear_model2<-lm( RDA2 ~ pC + cn + pH + NPP + map + mat + forest + conifer +
                        relEM +P + K + Ca + Mg, data=train_fg)
-  #Axe 3
+  # Axe 3
   linear_model3<-lm( RDA3 ~ pC + cn + pH + NPP + map + mat + forest + conifer +
                        relEM +P + K + Ca + Mg, data=train_fg) 
   
-  ## Validation ----
+  ### 3.2.3. Validation ----
   
   #Y^  Axe 1
   y1_est<-predict (linear_model1, newdata = val_fg)
@@ -152,34 +172,30 @@ for (i in 1:B){
   y3_est<-predict (linear_model3, newdata = val_fg)
   
   
+  ### 3.2.4. Calculating and saving scores ----
   
-  ## Distance computation (MSE) ----
+  #### MSE ----
   
   MSE1<- mean((val_fg$RDA1 - y1_est)^2)
   MSE2<- mean((val_fg$RDA2 - y2_est)^2)
   MSE3<- mean((val_fg$RDA3 - y3_est)^2)
-
   
-  ## Storing coefficients and MSE ----
+  LM_MSE <- rbind(LM_MSE, c(MSE1, MSE2, MSE3))
   
-  ## Coefficients 
-  
-  full_lm1 <- rbind(full_lm1, linear_model1$coefficients)
-  full_lm2 <- rbind(full_lm2, linear_model2$coefficients)
-  full_lm3 <- rbind(full_lm3, linear_model3$coefficients)
-  
-  ## MSE
-  
-  scores <- rbind(scores, c(MSE1, MSE2, MSE3))
- 
-  ## MAE
+  #### MAE ----
   
   LM_MAE <- rbind(LM_MAE, c(mae(val_fg$RDA1, y1_est),
                             mae(val_fg$RDA2, y2_est),
                             mae(val_fg$RDA3, y3_est)))
   
+  ### 3.2.5. Storing coefficients ----
+  
+  full_lm1 <- rbind(full_lm1, linear_model1$coefficients)
+  full_lm2 <- rbind(full_lm2, linear_model2$coefficients)
+  full_lm3 <- rbind(full_lm3, linear_model3$coefficients)
    
 }
+
 
 ## ____End of loop____ ----
 
@@ -190,7 +206,7 @@ colnames(full_lm2) <- c("Intercept", "pC", "cn", "pH", "NPP", "map", "mat", "for
                         "relEM", "P", "K", "Ca", "Mg")
 colnames(full_lm3) <- c("Intercept", "pC", "cn", "pH", "NPP", "map", "mat", "forest", "conifer",
                         "relEM", "P", "K", "Ca", "Mg")
-colnames(scores) <- c("MSE1", "MSE2", "MSE3")
+colnames(LM_MSE) <- c("MSE1", "MSE2", "MSE3")
 colnames(LM_MAE) <- c("MAE1", "MAE2", "MAE3")
 
 
@@ -198,7 +214,7 @@ head(full_lm1)
 head(full_lm2)
 head(full_lm3)
 
-head(scores)
+head(LM_MSE)
 
 # FINAL MEAN LINEAIRE MODEL   ----
 LM1_final<- data.frame('LM1'=rapply (full_lm1, mean)) %>% t()
@@ -210,14 +226,14 @@ LM3_final<- data.frame('LM3'=rapply (full_lm3, mean)) %>% t()
 #Evaluation criteria
 LM_scores_train<-data.frame(row.names = c("Axe1","Axe2","Axe3"))
 #RMSE
-LM_scores_train$RMSE<-c(sqrt(mean(scores$MSE1)),
-                        sqrt(mean(scores$MSE2)),
-                        sqrt(mean(scores$MSE3)))
+LM_scores_train$RMSE<-c(sqrt(mean(LM_MSE$MSE1)),
+                        sqrt(mean(LM_MSE$MSE2)),
+                        sqrt(mean(LM_MSE$MSE3)))
 
 
 
 ## MAE = Mean Absolute Error ----
-#NE MARCHE PAS ENCORE MAIS C'EST LA BONNE LIGNE DE CODE
+
 LM_scores_train$MAE <- c(mean(LM_MAE$MAE1),
                          mean(LM_MAE$MAE2),
                          mean(LM_MAE$MAE3))
