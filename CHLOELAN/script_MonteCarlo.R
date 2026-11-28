@@ -176,7 +176,7 @@ for (i in 1:B){
   
   ### 3.2.4. Evaluation criteria ----
   
-  #### MSE ----
+  #### MSE
   
   MSE1<- mean((val_fg$RDA1 - y1_est)^2)
   MSE2<- mean((val_fg$RDA2 - y2_est)^2)
@@ -184,11 +184,12 @@ for (i in 1:B){
   
   LM_MSE <- rbind(LM_MSE, c(MSE1, MSE2, MSE3))
   
-  #### MAE ----
+  #### MAE
   
   LM_MAE <- rbind(LM_MAE, c(mae(val_fg$RDA1, y1_est),
                             mae(val_fg$RDA2, y2_est),
                             mae(val_fg$RDA3, y3_est)))
+  
   
   ### 3.2.5. Storing coefficients ----
   
@@ -225,7 +226,6 @@ head(LM_MAE)
 LM1_final<- data.frame('LM1'=rapply (full_lm1, mean)) %>% t()
 LM2_final<- data.frame('LM2'=rapply (full_lm2, mean)) %>% t()
 LM3_final<- data.frame('LM3'=rapply (full_lm3, mean)) %>% t()
-
 
 
 ### 3.3.2. Evaluation criteria in LM_scores_train ----
@@ -395,7 +395,7 @@ final_coefs3 <- coef(EN_lm3, s = "lambda.min")
 
 #### 4.3.3. Calculation of Y^ ----
 
-##### Y^  Axe 1 ----
+##### Y^  Axe 1
 EN_y1_est_train<- RDA_coordinates %>% 
   
   #1. Multiplication of coefficient * values
@@ -412,7 +412,7 @@ EN_y1_est_train<- RDA_coordinates %>%
   select(Row.names,RDA1,y_est)
 
 
-##### Y^  Axe 2 ----
+##### Y^  Axe 2
 EN_y2_est_train<- RDA_coordinates %>% 
   
   #1. Multiplication of coefficient * values
@@ -429,7 +429,7 @@ EN_y2_est_train<- RDA_coordinates %>%
   select(Row.names,RDA2,y_est)
 
 
-##### Y^  Axe 3 ----
+##### Y^  Axe 3
 EN_y3_est_train<- RDA_coordinates %>% 
   
   #1. Multiplication of coefficient * values
@@ -446,7 +446,7 @@ EN_y3_est_train<- RDA_coordinates %>%
   select(Row.names,RDA3,y_est)
 
 
-### scores train ----
+#### 4.3.4. Evaluation criteria in EN_scores_train ----
 
 EN_scores_train <- data.frame(row.names = c("Axe1","Axe2","Axe3"))
 
@@ -463,15 +463,16 @@ EN_scores_train$MAE <- c(mae(EN_y1_est_train$RDA1,EN_y1_est_train$y_est),
 
 
 
+# 5. FINAL EVALUATION ----
+
+## 5.1. LINEAR MODEL ----
 
 
-# FINAL EVALUATION ----
+### 5.1.1. Calculation of Y^ eval ----
+# Computing the estimated values Y^ of final data (25% of whole dataset)
 
-##Computing the estimated values Y^ of final data (25% of whole dataset) ----
 
-### LINEAR MODEL ----
-
-####Y^  Axe 1 ----
+#### Y^  Axe 1
 
 FINAL_lm1_y_predict<- test_final_env %>% 
   
@@ -488,7 +489,8 @@ FINAL_lm1_y_predict<- test_final_env %>%
   #3. Select to have only y1_est
   select(y_est)
 
-####Y^  Axe 2 ----
+
+#### Y^  Axe 2
 
 FINAL_lm2_y_predict<- test_final_env %>% 
   
@@ -506,7 +508,7 @@ FINAL_lm2_y_predict<- test_final_env %>%
   select(y_est)
 
 
-####Y^  Axe 3 ----
+#### Y^  Axe 3
 
 FINAL_lm3_y_predict<- test_final_env %>% 
   
@@ -526,23 +528,22 @@ FINAL_lm3_y_predict<- test_final_env %>%
 Ypredict_lm <- data.frame('Y_final_est1'=FINAL_lm1_y_predict$y_est, 
                           'Y_final_est2'=FINAL_lm2_y_predict$y_est,
                           'Y_final_est3'=FINAL_lm3_y_predict$y_est, row.names = row.names(FINAL_lm1_y_predict))
-#Evaluation criteria
+
+
+### 5.1.2. Evaluation criteria in LM_scores_eval ----
+
 LM_scores_eval<-data.frame(row.names = c("Axe1","Axe2","Axe3"))
-#RMSE
+
 LM_scores_eval$RMSE<-c(sqrt(mean((fitted_values_proj$RDA1 - Ypredict_lm$Y_final_est1)^2)),
                        sqrt(mean((fitted_values_proj$RDA2 - Ypredict_lm$Y_final_est2)^2)),
                        sqrt(mean((fitted_values_proj$RDA3 - Ypredict_lm$Y_final_est3)^2)))
 
-
-
-## MAE = Mean Absolute Error ----
 LM_scores_eval$MAE <- c(mae(fitted_values_proj$RDA1, Ypredict_lm$Y_final_est1),
                         mae(fitted_values_proj$RDA2, Ypredict_lm$Y_final_est2),
                         mae(fitted_values_proj$RDA3, Ypredict_lm$Y_final_est3))
 
 
-
-## FINAL EVALUATION OF EN ----
+## 5.2. ELASTICNET ----
 
 ### Calculation of Y^ eval ----
 
