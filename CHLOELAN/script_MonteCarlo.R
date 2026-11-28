@@ -116,7 +116,7 @@ cols<-intersect(names(RDA_coordinates), names(env_observed)) # select all factor
 # 3. LINEAR MODEL ----
 
 
-## 3.1. Initialisation ----
+## 3.1. Initialization out of loop ----
 
 B <- 100 # Number of iterations for the loop
 
@@ -142,10 +142,12 @@ for (i in 1:B){
   
   ### 3.2.1. Initialization ----
   
-  # Creation of 2 groups for training (train) and cross validation (val)
+  # Creation of 2 groups for training (train) and cross validation (val).
   
-  train_fg <- RDA_coordinates %>% sample_frac(2/3) # We take coordinates of 2/3 of training data
-  val_fg <- setdiff(RDA_coordinates,train_fg) # The remaining 1/3 is used for validation.
+  # We keep the coordinates of 2/3 of the training data.
+  train_fg <- RDA_coordinates %>% sample_frac(2/3)
+  # The remaining 1/3 is used for validation.
+  val_fg <- setdiff(RDA_coordinates,train_fg)
   
   
   ### 3.2.2. Linear model ----
@@ -162,17 +164,17 @@ for (i in 1:B){
   
   ### 3.2.3. Validation ----
   
-  #Y^  Axe 1
+  # Y^  Axe 1
   y1_est<-predict (linear_model1, newdata = val_fg)
   
-  #Y^  Axe 2
+  # Y^  Axe 2
   y2_est<-predict (linear_model2, newdata = val_fg)
   
-  #Y^  Axe 3
+  # Y^  Axe 3
   y3_est<-predict (linear_model3, newdata = val_fg)
   
   
-  ### 3.2.4. Calculating and saving scores ----
+  ### 3.2.4. Evaluation criteria ----
   
   #### MSE ----
   
@@ -226,25 +228,26 @@ LM3_final<- data.frame('LM3'=rapply (full_lm3, mean)) %>% t()
 
 
 
-### 3.3.2. Evaluation criteria ----
+### 3.3.2. Evaluation criteria in LM_scores_train ----
 
 LM_scores_train<-data.frame(row.names = c("Axe1","Axe2","Axe3"))
 
-#### RMSE ----
 LM_scores_train$RMSE<-c(sqrt(mean(LM_MSE$MSE1)),
                         sqrt(mean(LM_MSE$MSE2)),
                         sqrt(mean(LM_MSE$MSE3)))
 
-#### MAE ----
 LM_scores_train$MAE <- c(mean(LM_MAE$MAE1),
                          mean(LM_MAE$MAE2),
                          mean(LM_MAE$MAE3))
 
 
+
+
+
 # 4. ELASTICNET ----
 
 
-
+## 4.1. Initialization out of loop ----
 
 n <- matrix(ncol = 0, nrow = 3)
 scores <- data.frame(n)
@@ -260,23 +263,27 @@ df_hp3 <- data.frame(best_alpha = NA, best_lambda = NA)
 
 B<-100
 
+## 4.2. ____Loop____ ----
+
 for (i in 1:B){
   print(paste0(i,"/100"))
   
-  ## Initialisation ----
+  ### 4.2.1. Initialization ----
   
-  #For choosing best parameters later
+  # For choosing best parameters later.
   cv_results1 <- data.frame(alpha = alphas, min_cvm = NA, lambda_min = NA)
   cv_results2 <- data.frame(alpha = alphas, min_cvm = NA, lambda_min = NA)
   cv_results3 <- data.frame(alpha = alphas, min_cvm = NA, lambda_min = NA)
   
 
-  # création of 2 groups for training(train) et la validation croisée(val)
+  # Creation of 2 groups for training (train) and cross validation (val).
   
-  train_fg <- RDA_coordinates %>% sample_frac(2/3) # we take coordonate of  2/3 of training data (96li)
-  val_fg<-setdiff(RDA_coordinates,train_fg)# 1/3 remaining is used for validation( 32li)
+  # We keep the coordinates of 2/3 of the training data.
+  train_fg <- RDA_coordinates %>% sample_frac(2/3)
+  # The remaining 1/3 is used for validation.
+  val_fg<-setdiff(RDA_coordinates,train_fg)
   
-  ## Search Grid over alpha -----
+  ### 4.2.2. Search Grid over alpha ----
   for (j in seq_along(alphas)) {
     #Linear model with Elastic net
     #Axe 1
