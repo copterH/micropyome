@@ -145,10 +145,10 @@ for (i in 1:B){
   # Creation of 2 groups for training (train) and cross validation (val)
   
   train_fg <- RDA_coordinates %>% sample_frac(2/3) # We take coordinates of 2/3 of training data
-  val_fg<-setdiff(RDA_coordinates,train_fg) # The remaining 1/3 is used for validation.
+  val_fg <- setdiff(RDA_coordinates,train_fg) # The remaining 1/3 is used for validation.
   
   
-  ### 3.2.2. Linear model -----
+  ### 3.2.2. Linear model ----
   
   # Axe 1
   linear_model1<-lm( RDA1 ~ pC + cn + pH + NPP + map + mat + forest + conifer +
