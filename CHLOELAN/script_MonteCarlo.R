@@ -4,6 +4,10 @@ Machine Learning for Biology Project
 
 "
 
+
+
+
+
 # 0. PREPARING WORKSPACE ----
 
 
@@ -23,6 +27,9 @@ library(glmnet) # Linear model
 set.seed(123)
 
 
+
+
+
 # 1. DATA SET UP ----
 
 
@@ -37,9 +44,7 @@ file_env<-data.frame(read_csv("13_variables_averyll.csv", show_col_types = FALSE
 row.names(file_env)<-file_env[,1]
 
 
-
 ## 1.2. SELECTION OF A SUBSET FOR THE FINAL EVALUATION ----
-
 
 ### Functionnal groups ----
 # We extract 25% of the dataset for the final test.
@@ -49,12 +54,6 @@ sample_final<-test_final_fg[,1]
 # Find all the lines from file_fg (the remaining 3/4) which are not in the final
 # evaluation subset, will be used in the train.
 fg_observed<-setdiff(file_fg,test_final_fg)
-
-# IS IT USEFUL TO KEEP ???
-# Checking if the size of fg_observed + test_final_fg is equal to the size of the whole dataset.
-nrow(test_final_fg)*4#le sous-ensemble de test contient 1/4 des donnees du dataset initial n = 19.248
-nrow(test_final_fg)+nrow(fg_observed) == nrow(file_fg)#somme des TRAIN+TEST = nb d'obs du dataset
-# summary(cv(m.auto, k = "loo", method = "naive"))
 
 # We clean the data by removing the first column repeating the site names.
 test_final_fg <- select(test_final_fg,-1)
@@ -70,13 +69,13 @@ env_observed<-setdiff(file_env,test_final_env)
 
 
 
-
 # 2. RDA ----
 # Redondancy analysis
 
 RDA <- rda(fg_observed ~ pC + cn + pH + NPP + map + mat + forest +
                          conifer + relEM +P + K + Ca + Mg, 
                          data = env_observed)
+
 
 ## 2.1. Extracting the RDA axes ----
 
@@ -100,6 +99,7 @@ plot(RDA, display = c("reg", "sp")) # biplot
 plot(RDA, display = "wa") # points
 # plot(RDA, display = "cn") # var X
 
+
 ## 2.2. Merging with environemental variables ----
 
 RDA_coordinates<-data.frame(merge(RDA_coordinates,env_observed,by=0))%>% as.data.frame()
@@ -113,54 +113,54 @@ cols<-intersect(names(RDA_coordinates), names(env_observed)) # select all factor
 
 
 
-
-
 # 3. MONTE CARLO ----
+
 
 ## 3.1. Initialisation ----
 
 B <- 100 # Number of iterations for the loop
 
-# Empty dataframe for saving all the lm inside the loop
+# Empty dataframe for saving all the LM inside the loop
 
 m <- matrix(ncol = 0, nrow = B)
 full_lm1 <- data.frame(m)
 full_lm2 <- data.frame(m)
 full_lm3 <- data.frame(m)
 
-# Empty dataframe for saving the MSE for each tested model
+# Empty dataframe for saving the MSE and MAE for each tested model
 
 n <- matrix(ncol=0, nrow=3)
 LM_MSE <- data.frame(n)
 LM_MAE <- data.frame(n)
-scores
 
-## ____Loop____ ----
+
+## 3.2. ____Loop____ ----
 
 for (i in 1:B){
   
   print(paste0(i,"/100"))
-  ## Initialisation ----
   
-  # creation of 2 groups for trainig(train) and cross validation(val)
+  ### 3.2.1. Initialization ----
   
-  train_fg <- RDA_coordinates %>% sample_frac(2/3) #we take coordinates of  2/3 of training data (96li)
-  val_fg<-setdiff(RDA_coordinates,train_fg)# 1/3 remaining is used for validation(32li)
+  # Creation of 2 groups for training (train) and cross validation (val)
+  
+  train_fg <- RDA_coordinates %>% sample_frac(2/3) # We take coordinates of 2/3 of training data
+  val_fg<-setdiff(RDA_coordinates,train_fg) # The remaining 1/3 is used for validation.
   
   
-  ## Linear model -----
+  ### 3.2.2. Linear model -----
   
-  #Axe 1
+  # Axe 1
   linear_model1<-lm( RDA1 ~ pC + cn + pH + NPP + map + mat + forest + conifer +
                        relEM +P + K + Ca + Mg, data=train_fg)
-  #Axe 2
+  # Axe 2
   linear_model2<-lm( RDA2 ~ pC + cn + pH + NPP + map + mat + forest + conifer +
                        relEM +P + K + Ca + Mg, data=train_fg)
-  #Axe 3
+  # Axe 3
   linear_model3<-lm( RDA3 ~ pC + cn + pH + NPP + map + mat + forest + conifer +
                        relEM +P + K + Ca + Mg, data=train_fg) 
   
-  ## Validation ----
+  ### 3.2.3. Validation ----
   
   #Y^  Axe 1
   y1_est<-predict (linear_model1, newdata = val_fg)
@@ -172,34 +172,30 @@ for (i in 1:B){
   y3_est<-predict (linear_model3, newdata = val_fg)
   
   
+  ### 3.2.4. Calculating and saving scores ----
   
-  ## Distance computation (MSE) ----
+  #### MSE ----
   
   MSE1<- mean((val_fg$RDA1 - y1_est)^2)
   MSE2<- mean((val_fg$RDA2 - y2_est)^2)
   MSE3<- mean((val_fg$RDA3 - y3_est)^2)
-
-  
-  ## Storing coefficients and MSE ----
-  
-  ## Coefficients 
-  
-  full_lm1 <- rbind(full_lm1, linear_model1$coefficients)
-  full_lm2 <- rbind(full_lm2, linear_model2$coefficients)
-  full_lm3 <- rbind(full_lm3, linear_model3$coefficients)
-  
-  ## MSE
   
   LM_MSE <- rbind(LM_MSE, c(MSE1, MSE2, MSE3))
- 
-  ## MAE
+  
+  #### MAE ----
   
   LM_MAE <- rbind(LM_MAE, c(mae(val_fg$RDA1, y1_est),
                             mae(val_fg$RDA2, y2_est),
                             mae(val_fg$RDA3, y3_est)))
   
+  ### 3.2.5. Storing coefficients ----
+  
+  full_lm1 <- rbind(full_lm1, linear_model1$coefficients)
+  full_lm2 <- rbind(full_lm2, linear_model2$coefficients)
+  full_lm3 <- rbind(full_lm3, linear_model3$coefficients)
    
 }
+
 
 ## ____End of loop____ ----
 
